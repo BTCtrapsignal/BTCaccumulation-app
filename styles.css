@@ -104,16 +104,58 @@ h1 { margin:0; font-size: 42px; letter-spacing: -0.04em; }
   .hero-number { font-size: 48px; }
   .month-grid, .split-grid, .compact-grid { grid-template-columns: 1fr; }
 }
-/* ===== FIX FAB LAYER ===== */
+/* ===== FIX NAV LAYOUT (5 SLOT) ===== */
+.bottom-nav {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: min(430px, 100vw);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 🔥 5 ช่อง */
+  align-items: center;
+  background: #fff;
+  border-top: 1px solid #eee;
+  z-index: 1000;
+}
+
+/* ===== NAV ITEMS ===== */
+.nav-item {
+  text-align: center;
+  padding: 10px 0;
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.nav-item.active {
+  color: #111;
+  font-weight: 600;
+}
+
+/* ===== CENTER SLOT (เว้นช่องให้ FAB) ===== */
+.nav-add-spacer {
+  pointer-events: none;
+}
+
+/* ===== FAB PERFECT CENTER ===== */
 .fab {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(52px + env(safe-area-inset-bottom));
+  bottom: calc(40px + env(safe-area-inset-bottom)); /* 🔥 ตรงกลางพอดี */
+  width: 60px;
+  height: 60px;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
   z-index: 2000;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
 }
 
-/* ===== FIX NAV ===== */
-.bottom-nav {
-  z-index: 1000;
+/* ===== กัน content ชน nav ===== */
+.container {
+  padding-bottom: 120px;
 }
