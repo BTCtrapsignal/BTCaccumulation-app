@@ -104,3 +104,16 @@ h1 { margin:0; font-size: 42px; letter-spacing: -0.04em; }
   .hero-number { font-size: 48px; }
   .month-grid, .split-grid, .compact-grid { grid-template-columns: 1fr; }
 }
+/* ===== FIX FAB LAYER ===== */
+.fab {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(52px + env(safe-area-inset-bottom));
+  z-index: 2000;
+}
+
+/* ===== FIX NAV ===== */
+.bottom-nav {
+  z-index: 1000;
+}
