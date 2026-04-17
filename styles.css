@@ -104,7 +104,7 @@ h1 { margin:0; font-size: 42px; letter-spacing: -0.04em; }
   .hero-number { font-size: 48px; }
   .month-grid, .split-grid, .compact-grid { grid-template-columns: 1fr; }
 }
-/* ===== FIX NAV LAYOUT (5 SLOT) ===== */
+/* ===== NAV (5 SLOT CLEAN) ===== */
 .bottom-nav {
   position: fixed;
   left: 50%;
@@ -112,18 +112,19 @@ h1 { margin:0; font-size: 42px; letter-spacing: -0.04em; }
   bottom: 0;
   width: min(430px, 100vw);
   display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 🔥 5 ช่อง */
-  align-items: center;
-  background: #fff;
-  border-top: 1px solid #eee;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: end;
+  padding: 8px 8px calc(12px + env(safe-area-inset-bottom));
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--line);
   z-index: 1000;
 }
 
-/* ===== NAV ITEMS ===== */
+/* ===== NAV ITEM ===== */
 .nav-item {
   text-align: center;
-  padding: 10px 0;
-  font-size: 14px;
+  font-size: 13px;
   color: #9ca3af;
 }
 
@@ -132,30 +133,30 @@ h1 { margin:0; font-size: 42px; letter-spacing: -0.04em; }
   font-weight: 600;
 }
 
-/* ===== CENTER SLOT (เว้นช่องให้ FAB) ===== */
+/* ===== ช่องกลาง (เว้นให้ FAB) ===== */
 .nav-add-spacer {
   pointer-events: none;
 }
 
-/* ===== FAB PERFECT CENTER ===== */
+/* ===== FAB PERFECT ===== */
 .fab {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(40px + env(safe-area-inset-bottom)); /* 🔥 ตรงกลางพอดี */
-  width: 60px;
-  height: 60px;
-  border-radius: 999px;
+  bottom: calc(12px + env(safe-area-inset-bottom)); /* 🔥 key */
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
   background: #111;
   color: #fff;
+  font-size: 30px;
   display: grid;
   place-items: center;
-  font-size: 28px;
   z-index: 2000;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.18);
 }
 
-/* ===== กัน content ชน nav ===== */
+/* ===== กัน content โดน nav ===== */
 .container {
-  padding-bottom: 120px;
+  padding-bottom: 110px;
 }
