@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>BTC Accumulation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow" id="headerDate"></p>
+        <h1 id="pageTitle">Home</h1>
+      </div>
+      <button class="icon-btn" id="editGoalTopBtn" aria-label="Edit goal">
+        <span>⚙</span>
+      </button>
+    </header>
+
+    <main class="content">
+      <section class="screen active" id="screen-home">
+        <section class="card hero-card">
+          <div class="card-head">
+            <div>
+              <p class="eyebrow">BTC Goal</p>
+              <h2 class="hero-number"><span id="heroBtc"></span><small> BTC</small></h2>
+              <p class="subtle">Goal: <span id="heroGoal"></span> BTC</p>
+            </div>
+            <button class="pill-btn" id="editGoalBtn">Edit Goal</button>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-bar"><div id="goalProgressFill" class="progress-fill"></div></div>
+            <div class="progress-meta">
+              <span id="goalPercent"></span>
+            </div>
+          </div>
+
+          <div class="goal-footer two-col">
+            <div>
+              <p class="meta-label">Remaining</p>
+              <p class="meta-value muted-orange" id="remainingBtc"></p>
+            </div>
+            <div>
+              <p class="meta-label">Status</p>
+              <p class="meta-value" id="goalStatus"></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="split-grid" id="homeStats"></section>
+
+        <section class="card">
+          <div class="card-head compact">
+            <h3>Cash Flow → BTC</h3>
+            <span class="eyebrow">This month</span>
+          </div>
+          <div class="cashflow-stack">
+            <div class="flow-row">
+              <div class="flow-left">
+                <div class="icon-circle">↗</div>
+                <div>
+                  <p>Futures PnL</p>
+                  <strong class="positive" id="futuresCash"></strong>
+                </div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <strong class="positive" id="futuresToBtc"></strong>
+            </div>
+            <div class="flow-row">
+              <div class="flow-left">
+                <div class="icon-circle">▦</div>
+                <div>
+                  <p>Grid Bot PnL</p>
+                  <strong class="positive" id="gridCash"></strong>
+                </div>
+              </div>
+              <div class="flow-arrow">→</div>
+              <strong class="positive" id="gridToBtc"></strong>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="metric-row">
+            <span>Total converted</span>
+            <strong class="positive big" id="totalConverted"></strong>
+          </div>
+        </section>
+
+        <section class="card month-card">
+          <div class="card-head compact">
+            <h3>This Month</h3>
+          </div>
+          <div class="month-grid">
+            <div>
+              <p class="positive month-number" id="monthBtc"></p>
+              <p class="meta-label">BTC accumulated</p>
+            </div>
+            <div>
+              <p class="month-number" id="monthEntries"></p>
+              <p class="meta-label">Entries</p>
+            </div>
+            <div>
+              <p class="month-number" id="monthInvested"></p>
+              <p class="meta-label">Capital deployed</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head compact">
+            <h3>Recent Activity</h3>
+          </div>
+          <div id="recentActivity" class="list"></div>
+        </section>
+      </section>
+
+      <section class="screen" id="screen-dca">
+        <section class="split-grid compact-grid" id="dcaStats"></section>
+        <section class="card">
+          <div class="card-head compact">
+            <h3>Cumulative BTC</h3>
+            <div class="range-switch">
+              <button class="range-btn active">ALL</button>
+            </div>
+          </div>
+          <svg id="dcaChart" viewBox="0 0 320 180" class="chart"></svg>
+        </section>
+        <section class="card">
+          <div class="card-head compact"><h3>DCA Entries</h3></div>
+          <div id="dcaList" class="list"></div>
+        </section>
+      </section>
+
+      <section class="screen" id="screen-futures">
+        <section class="split-grid compact-grid" id="futuresStats"></section>
+        <section class="card">
+          <div class="card-head compact"><h3>Futures PnL</h3></div>
+          <svg id="futuresChart" viewBox="0 0 320 180" class="chart"></svg>
+        </section>
+        <section class="card">
+          <div class="card-head compact"><h3>Trade Log</h3></div>
+          <div id="futuresList" class="list"></div>
+        </section>
+      </section>
+
+      <section class="screen" id="screen-more">
+        <section class="card">
+          <div class="card-head compact"><h3>Dip Reserve</h3></div>
+          <div class="split-grid compact-grid" id="dipStats"></div>
+          <div class="divider"></div>
+          <div id="dipList" class="list"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head compact"><h3>Grid Bot</h3></div>
+          <div class="split-grid compact-grid" id="gridStats"></div>
+          <div class="divider"></div>
+          <div id="gridList" class="list"></div>
+        </section>
+
+        <section class="card">
+          <div class="card-head compact"><h3>Dip Trigger Levels</h3></div>
+          <div id="triggerList" class="list"></div>
+        </section>
+      </section>
+    </main>
+
+    <button id="addBtn" class="fab" aria-label="Add entry">+</button>
+
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-screen="home">Home</button>
+      <button class="nav-item" data-screen="dca">DCA</button>
+      <button class="nav-item nav-add-spacer" aria-hidden="true"></button>
+      <button class="nav-item" data-screen="futures">Futures</button>
+      <button class="nav-item" data-screen="more">More</button>
+    </nav>
+  </div>
+
+  <dialog id="goalDialog" class="sheet-dialog">
+    <form method="dialog" class="sheet">
+      <div class="sheet-head">
+        <h3>Edit Goal</h3>
+        <button class="icon-btn" value="cancel">✕</button>
+      </div>
+      <label class="field">
+        <span>Target BTC</span>
+        <input id="goalInput" type="number" min="0.001" step="0.0001" />
+      </label>
+      <menu class="sheet-actions">
+        <button value="cancel" class="ghost-btn">Cancel</button>
+        <button id="saveGoalBtn" value="default" class="primary-btn" type="button">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <dialog id="entryDialog" class="sheet-dialog">
+    <form class="sheet" id="entryForm">
+      <div class="sheet-head">
+        <h3>Add Entry</h3>
+        <button type="button" class="icon-btn" id="closeEntryBtn">✕</button>
+      </div>
+
+      <div class="seg-row" id="entryStrategySeg">
+        <button type="button" class="seg-btn active" data-value="DCA">DCA</button>
+        <button type="button" class="seg-btn" data-value="Dip Reserve">Dip</button>
+        <button type="button" class="seg-btn" data-value="Futures">Futures</button>
+        <button type="button" class="seg-btn" data-value="Grid Bot">Grid</button>
+      </div>
+
+      <div id="spotFields">
+        <label class="field"><span>Date</span><input name="date" type="date" required /></label>
+        <label class="field"><span>Type</span><input name="type" type="text" value="BUY" /></label>
+        <label class="field"><span>BTC Amount</span><input name="btcQty" type="number" step="0.00000001" /></label>
+        <label class="field"><span>Price (USDT)</span><input name="price" type="number" step="0.01" /></label>
+        <label class="field"><span>USDT Amount</span><input name="usdtAmount" type="number" step="0.01" /></label>
+        <label class="field"><span>Source / Exchange</span><input name="source" type="text" value="Manual" /></label>
+        <label class="field"><span>Location / Wallet</span><input name="location" type="text" value="Wallet" /></label>
+        <label class="field"><span>Note</span><input name="note" type="text" /></label>
+      </div>
+
+      <div id="futuresFields" class="hidden">
+        <label class="field"><span>Date Open</span><input name="dateOpen" type="date" /></label>
+        <label class="field"><span>Date Close</span><input name="dateClose" type="date" /></label>
+        <label class="field"><span>Side</span><input name="side" type="text" value="Long" /></label>
+        <label class="field"><span>Leverage</span><input name="leverage" type="text" value="3x" /></label>
+        <label class="field"><span>Mode</span><input name="mode" type="text" value="Cross" /></label>
+        <label class="field"><span>Entry Price</span><input name="entryPrice" type="number" step="0.01" /></label>
+        <label class="field"><span>Exit Price</span><input name="exitPrice" type="number" step="0.01" /></label>
+        <label class="field"><span>Size BTC</span><input name="sizeBtc" type="number" step="0.0001" /></label>
+        <label class="field"><span>PNL (USDT)</span><input name="pnlUsdt" type="number" step="0.01" /></label>
+        <label class="field"><span>Note</span><input name="notes" type="text" /></label>
+      </div>
+
+      <div id="gridFields" class="hidden">
+        <label class="field"><span>Date Start</span><input name="dateStart" type="date" /></label>
+        <label class="field"><span>Date End</span><input name="dateEnd" type="date" /></label>
+        <label class="field"><span>Grid Type</span><input name="gridType" type="text" value="Spot" /></label>
+        <label class="field"><span>Mode</span><input name="gridMode" type="text" value="Arithmetic Grid" /></label>
+        <label class="field"><span>Capital (USDT)</span><input name="capitalUsdt" type="number" step="0.01" /></label>
+        <label class="field"><span>Net Profit (USDT)</span><input name="netProfitUsdt" type="number" step="0.01" /></label>
+        <label class="field"><span>ROI (%)</span><input name="gridRoi" type="number" step="0.01" /></label>
+      </div>
+
+      <div class="sheet-actions">
+        <button type="button" class="ghost-btn" id="cancelEntryBtn">Cancel</button>
+        <button type="submit" class="primary-btn">Save Entry</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
