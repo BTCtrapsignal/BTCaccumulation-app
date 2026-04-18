@@ -2,7 +2,12 @@
   "settings": {
     "currentPrice": 71000,
     "usdthb": 32.86,
-    "goalBtc": 1.0
+    "goalBtc": 1.0,
+    "currentAge": 29,
+    "targetAge": 40,
+    "monthlyDcaUsd": 300,
+    "annualGrowthRate": 10,
+    "theme": "light"
   },
   "dca": [
     {
@@ -144,7 +149,7 @@
       "btcQty": 0.0002134,
       "usdtAmount": 14.28,
       "price": 66890,
-      "note": "Auto DCA (THB→USDT, 1m candle)",
+      "note": "Auto DCA (THB\u2192USDT, 1m candle)",
       "initial": 475.76,
       "location": "Bitkub",
       "strategy": "DCA"
@@ -156,7 +161,7 @@
       "btcQty": 0.00054986,
       "usdtAmount": 36.96,
       "price": 67200,
-      "note": "Auto DCA (THB→USDT, 1m candle)",
+      "note": "Auto DCA (THB\u2192USDT, 1m candle)",
       "initial": 1200,
       "location": "Bitkub",
       "strategy": "DCA"
@@ -442,7 +447,7 @@
       "cumPnlThb": -2263.5852,
       "roi": 0.74,
       "mistakeTag": "Good Trap / Proper Exit",
-      "notes": "Sweep → TP",
+      "notes": "Sweep \u2192 TP",
       "strategy": "Futures"
     }
   ],
