@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'btc-stacking-v6';
+const STORAGE_KEY = 'btc-stacking-v2';
 
 const state = {
   settings: {
@@ -10,11 +10,13 @@ const state = {
     monthlyDcaUsd: 300,
     annualGrowthRate: 10,
     theme: 'light',
-    priceUpdatedAt: null,
-    startingSource: 'dca',
-    manualCurrentDcaBtc: null
+    priceUpdatedAt: null
   },
-  dca: [], dip: [], futures: [], grid: [], triggers: []
+  dca: [],
+  dip: [],
+  futures: [],
+  grid: [],
+  triggers: []
 };
 
 async function init() {
@@ -25,6 +27,7 @@ async function init() {
   state.futures = remote.futures || [];
   state.grid = remote.grid || [];
   state.triggers = remote.triggers || [];
+
   hydrateLocal();
   setupTheme();
   setupNav();
@@ -37,41 +40,60 @@ async function init() {
 function hydrateLocal() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (!saved) return;
     if (saved.settings) Object.assign(state.settings, saved.settings);
-    ['dca','dip','futures','grid'].forEach(k => { if (Array.isArray(saved[k])) state[k] = saved[k]; });
+    ['dca', 'dip', 'futures', 'grid'].forEach(key => {
+      if (Array.isArray(saved[key])) state[key] = saved[key];
+    });
   } catch {}
 }
+
 function persist() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ settings: state.settings, dca: state.dca, dip: state.dip, futures: state.futures, grid: state.grid }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    settings: state.settings,
+    dca: state.dca,
+    dip: state.dip,
+    futures: state.futures,
+    grid: state.grid
+  }));
 }
 
-const fmtNum = (v,d=4) => Number(v||0).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});
-const fmtUsd = (v,d=0) => `${Number(v)<0?'-':''}$${Math.abs(Number(v||0)).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d})}`;
-const fmtPct = (v,d=2) => `${Number(v||0).toFixed(d)}%`;
-const asDate = v => new Date(v);
-const sortDateDesc = (a,b,key='date') => asDate(b[key]) - asDate(a[key]);
-const clamp = (n,min,max) => Math.max(min, Math.min(max, n));
-function formatHeaderDate(){ return new Date().toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}); }
-function signBtc(v,d=4){ return `${Number(v)>=0?'+':'-'}${fmtNum(Math.abs(v),d)} BTC`; }
+function fmtNum(v, d = 4) { return Number(v || 0).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d }); }
+function fmtUsd(v, d = 0) {
+  const sign = Number(v) < 0 ? '-' : '';
+  return `${sign}$${Math.abs(Number(v || 0)).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d })}`;
+}
+function fmtPct(v, d = 2) { return `${Number(v || 0).toFixed(d)}%`; }
+function fmtYears(v) { return `${Number(v).toFixed(1)} years`; }
+function todayStr() { return new Date().toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' }); }
+function asDate(v) { return new Date(v); }
+function sortByDateDesc(a,b,key='date'){ return asDate(b[key]) - asDate(a[key]); }
+
+function applyTheme() {
+  document.getElementById('app').classList.toggle('theme-dark', state.settings.theme === 'dark');
+}
 
 function setupTheme() {
   applyTheme();
   document.getElementById('themeToggleBtn').addEventListener('click', () => {
     state.settings.theme = state.settings.theme === 'dark' ? 'light' : 'dark';
-    persist(); applyTheme();
+    persist();
+    applyTheme();
   });
 }
-function applyTheme(){ document.getElementById('app').classList.toggle('theme-dark', state.settings.theme === 'dark'); }
 
 function setupNav() {
-  document.querySelectorAll('.nav-item[data-screen]').forEach(btn => btn.addEventListener('click', () => switchScreen(btn.dataset.screen)));
+  document.querySelectorAll('.nav-item[data-screen]').forEach(btn => {
+    btn.addEventListener('click', () => switchScreen(btn.dataset.screen));
+  });
 }
+
 function switchScreen(screen) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`screen-${screen}`).classList.add('active');
-  document.querySelectorAll('.nav-item[data-screen]').forEach(btn => btn.classList.toggle('active', btn.dataset.screen===screen));
-  const titles = { home:'Home', dca:'BTC Stacking', futures:'Futures', cash:'Cash Flow' };
-  document.getElementById('pageTitle').textContent = titles[screen] || 'Home';
+  document.querySelectorAll('.nav-item[data-screen]').forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screen));
+  document.getElementById('pageTitle').textContent = screen === 'home' ? 'Home' : screen === 'dca' ? 'BTC Stacking' : screen === 'futures' ? 'Futures' : 'Cash';
+  window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
 }
 
 function setupDialogs() {
@@ -82,25 +104,19 @@ function setupDialogs() {
   });
   document.getElementById('saveGoalBtn').addEventListener('click', () => {
     state.settings.goalBtc = Math.max(0.001, Number(document.getElementById('goalInput').value || 1));
-    persist(); goalDialog.close(); render();
+    persist();
+    goalDialog.close();
+    render();
   });
 
   const projectionDialog = document.getElementById('projectionDialog');
   const projectionForm = document.getElementById('projectionForm');
-  const sourceSelect = document.getElementById('startingSourceSelect');
-  const customWrap = document.getElementById('customCurrentWrap');
-  const updateCustomVisibility = () => customWrap.classList.toggle('hidden', sourceSelect.value !== 'custom');
-  sourceSelect.addEventListener('change', updateCustomVisibility);
-
   document.getElementById('editProjectionBtn').addEventListener('click', () => {
-    const metrics = computeMetrics();
     projectionForm.currentAge.value = state.settings.currentAge;
     projectionForm.targetAge.value = state.settings.targetAge;
-    projectionForm.startingSource.value = state.settings.startingSource || 'dca';
-    projectionForm.currentDcaBtc.value = Number(state.settings.manualCurrentDcaBtc ?? metrics.dcaBtc).toFixed(4);
+    projectionForm.currentDcaBtc.value = computeMetrics().dcaBtc.toFixed(4);
     projectionForm.monthlyDcaUsd.value = state.settings.monthlyDcaUsd;
     projectionForm.annualGrowthRate.value = state.settings.annualGrowthRate;
-    updateCustomVisibility();
     projectionDialog.showModal();
   });
   document.getElementById('closeProjectionBtn').addEventListener('click', () => projectionDialog.close());
@@ -112,9 +128,11 @@ function setupDialogs() {
     state.settings.targetAge = Number(f.get('targetAge') || 40);
     state.settings.monthlyDcaUsd = Number(f.get('monthlyDcaUsd') || 300);
     state.settings.annualGrowthRate = Number(f.get('annualGrowthRate') || 10);
-    state.settings.startingSource = f.get('startingSource') || 'dca';
-    state.settings.manualCurrentDcaBtc = state.settings.startingSource === 'custom' ? Number(f.get('currentDcaBtc') || 0) : null;
-    persist(); projectionDialog.close(); render();
+    const manualCurrent = Number(f.get('currentDcaBtc') || 0);
+    if (manualCurrent > 0) state.settings.manualCurrentDcaBtc = manualCurrent;
+    persist();
+    projectionDialog.close();
+    render();
   });
 
   setupEntryDialog();
@@ -123,96 +141,131 @@ function setupDialogs() {
 function setupEntryDialog() {
   const dialog = document.getElementById('entryDialog');
   const form = document.getElementById('entryForm');
-  document.getElementById('addBtn').addEventListener('click', () => {
+  const addBtn = document.getElementById('addBtn');
+  const close = () => dialog.close();
+  addBtn.addEventListener('click', () => {
     form.reset();
     const today = new Date().toISOString().slice(0,10);
     ['date','dateOpen','dateClose','dateStart','dateEnd'].forEach(name => { if (form[name]) form[name].value = today; });
     setEntryMode('DCA');
     dialog.showModal();
   });
-  document.getElementById('closeEntryBtn').addEventListener('click', () => dialog.close());
-  document.getElementById('cancelEntryBtn').addEventListener('click', () => dialog.close());
+  document.getElementById('closeEntryBtn').addEventListener('click', close);
+  document.getElementById('cancelEntryBtn').addEventListener('click', close);
   document.querySelectorAll('#entryStrategySeg .seg-btn').forEach(btn => btn.addEventListener('click', () => setEntryMode(btn.dataset.value)));
   form.addEventListener('submit', e => {
     e.preventDefault();
     const mode = document.querySelector('#entryStrategySeg .seg-btn.active').dataset.value;
     const f = new FormData(form);
     if (mode === 'Futures') {
-      state.futures.unshift({ dateOpen:f.get('dateOpen'), dateClose:f.get('dateClose'), side:f.get('side'), leverage:f.get('leverage'), mode:f.get('mode'), entryPrice:Number(f.get('entryPrice')||0), exitPrice:Number(f.get('exitPrice')||0), sizeBtc:Number(f.get('sizeBtc')||0), pnlUsdt:Number(f.get('pnlUsdt')||0), notes:f.get('notes'), strategy:'Futures' });
+      state.futures.unshift({
+        dateOpen: f.get('dateOpen'), dateClose: f.get('dateClose'), side: f.get('side'), leverage: f.get('leverage'),
+        mode: f.get('mode'), entryPrice: Number(f.get('entryPrice')||0), exitPrice: Number(f.get('exitPrice')||0),
+        sizeBtc: Number(f.get('sizeBtc')||0), pnlUsdt: Number(f.get('pnlUsdt')||0), notes: f.get('notes')
+      });
     } else if (mode === 'Grid Bot') {
-      state.grid.unshift({ dateStart:f.get('dateStart'), dateEnd:f.get('dateEnd'), gridType:f.get('gridType'), mode:f.get('gridMode'), capitalUsdt:Number(f.get('capitalUsdt')||0), netProfitUsdt:Number(f.get('netProfitUsdt')||0), roi:Number(f.get('roi')||0), note:f.get('gridNote'), strategy:'Grid Bot' });
+      state.grid.unshift({
+        dateStart: f.get('dateStart'), dateEnd: f.get('dateEnd'), gridType: f.get('gridType'), mode: f.get('gridMode'),
+        capitalUsdt: Number(f.get('capitalUsdt')||0), netProfitUsdt: Number(f.get('netProfitUsdt')||0), roi: Number(f.get('roi')||0), note: f.get('gridNote')
+      });
     } else {
-      const target = mode === 'Dip Reserve' ? state.dip : state.dca;
-      target.unshift({ date:f.get('date'), type:f.get('type'), source:f.get('source'), btcQty:Number(f.get('btcQty')||0), usdtAmount:Number(f.get('usdtAmount')||0), price:Number(f.get('price')||0), note:f.get('note'), location:f.get('location'), strategy:mode });
+      const targetArray = mode === 'Dip Reserve' ? state.dip : state.dca;
+      targetArray.unshift({
+        date: f.get('date'), type: f.get('type'), source: f.get('source'), btcQty: Number(f.get('btcQty')||0),
+        usdtAmount: Number(f.get('usdtAmount')||0), price: Number(f.get('price')||0), note: f.get('note'),
+        location: f.get('location'), strategy: mode
+      });
     }
-    persist(); dialog.close(); render();
+    persist();
+    close();
+    render();
   });
 }
-function setEntryMode(mode){
+
+function setEntryMode(mode) {
   document.querySelectorAll('#entryStrategySeg .seg-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.value === mode));
   document.getElementById('spotFields').classList.toggle('hidden', mode === 'Futures' || mode === 'Grid Bot');
   document.getElementById('futuresFields').classList.toggle('hidden', mode !== 'Futures');
   document.getElementById('gridFields').classList.toggle('hidden', mode !== 'Grid Bot');
 }
 
+
 function setupShare() {
   const dialog = document.getElementById('shareDialog');
-  document.getElementById('shareBtn').addEventListener('click', () => { updateShareCard(); dialog.showModal(); });
-  document.getElementById('closeShareBtn').addEventListener('click', () => dialog.close());
+  const preview = document.getElementById('sharePreview');
+  let mode = 'amount';
+
+  const renderSharePreview = () => {
+    const m = computeMetrics();
+    const p = estimateDcaProjection();
+    const pct = ((m.dcaBtc / state.settings.goalBtc) * 100);
+    let title = 'Stacking Bitcoin';
+    let big = '';
+    let sub = '';
+    if (mode === 'amount') {
+      big = `${fmtNum(m.dcaBtc, 4)} BTC`;
+      sub = `${fmtPct(pct, 2)} to ${fmtNum(state.settings.goalBtc, 4)} BTC`;
+    } else if (mode === 'progress') {
+      big = `${fmtPct(pct, 2)}`;
+      sub = 'on the way to 1 BTC';
+    } else if (mode === 'stealth') {
+      big = 'Stay humble';
+      sub = 'Stack sats.';
+    } else {
+      big = `At age ${p.targetAge}: ${fmtNum(p.estimatedBTCAtTargetAge, 3)} BTC`;
+      sub = p.onTrack ? 'On target' : `Need ${fmtUsd(p.requiredDca,0)}/month`;
+    }
+    preview.innerHTML = `<h4>${title}</h4><div class="share-big">${big}</div><div class="share-sub">${sub}</div><div class="footnote">btcstack.app</div>`;
+  };
+
+  document.getElementById('shareProgressBtn')?.addEventListener('click', () => {
+    mode = 'amount';
+    document.querySelectorAll('#shareModeSeg .seg-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+    renderSharePreview();
+    dialog.showModal();
+  });
   document.querySelectorAll('#shareModeSeg .seg-btn').forEach(btn => btn.addEventListener('click', () => {
-    document.querySelectorAll('#shareModeSeg .seg-btn').forEach(b => b.classList.toggle('active', b===btn));
-    updateShareCard();
+    mode = btn.dataset.value;
+    document.querySelectorAll('#shareModeSeg .seg-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderSharePreview();
   }));
-  document.getElementById('saveImageBtn').addEventListener('click', () => shareProgress('save'));
-  document.getElementById('igShareBtn').addEventListener('click', () => shareProgress('ig'));
-  document.getElementById('fbShareBtn').addEventListener('click', () => shareProgress('fb'));
-  document.getElementById('xShareBtn').addEventListener('click', () => shareProgress('x'));
-}
-async function shareProgress(channel) {
-  const { blob, text } = await createShareAsset();
-  if (channel === 'x') {
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
-    return;
+
+  async function exportPreview() {
+    const card = preview;
+    if (!window.html2canvas) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+        s.onload = resolve; s.onerror = reject; document.head.appendChild(s);
+      });
+    }
+    return await window.html2canvas(card, { backgroundColor: getComputedStyle(card).backgroundColor, scale: 2 });
   }
-  const file = new File([blob], 'btc-stacking.png', { type: 'image/png' });
-  if (channel === 'save') {
+
+  async function shareFile(text, target) {
+    const canvas = await exportPreview();
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const file = new File([blob], 'btc-stacking.png', { type: 'image/png' });
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'BTC Stacking', text });
+    } else {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'btc-stacking.png';
+      a.click();
+    }
+  }
+
+  document.getElementById('saveImageBtn')?.addEventListener('click', async () => {
+    const canvas = await exportPreview();
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = 'btc-stacking.png'; a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    return;
-  }
-  if (navigator.share && navigator.canShare?.({ files:[file] })) {
-    try {
-      await navigator.share({ files:[file], title:'BTC Stacking', text: channel === 'ig' ? 'Share to Instagram Story' : 'Share to Facebook' });
-    } catch {}
-  } else {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = 'btc-stacking.png'; a.click();
-  }
-}
-async function createShareAsset() {
-  const card = document.getElementById('shareCard');
-  const canvas = await html2canvas(card, { backgroundColor: null, scale: 2 });
-  const blob = await new Promise(resolve => canvas.toBlob(resolve));
-  return { blob, text: getShareText() };
-}
-function getShareText() {
-  const p = estimateDcaProjection();
-  const mode = document.querySelector('#shareModeSeg .seg-btn.active')?.dataset.value || 'amount';
-  if (mode === 'progress') return `I’m ${fmtPct((p.currentBtc/p.targetBTC)*100,2)} to 1 BTC. Stacking consistently.`;
-  if (mode === 'stealth') return `Stacking Bitcoin quietly. Stay humble. Stack sats.`;
-  if (mode === 'plan') return `At age ${p.targetAge}, my DCA-only path reaches ${fmtNum(p.estimatedBTCAtTargetAge,3)} BTC.`;
-  return `I’m stacking ${fmtNum(p.currentBtc,4)} BTC on my way to 1 BTC.`;
-}
-function updateShareCard() {
-  const p = estimateDcaProjection();
-  const mode = document.querySelector('#shareModeSeg .seg-btn.active')?.dataset.value || 'amount';
-  let main = `${fmtNum(p.currentBtc,4)} BTC`, sub = `${fmtPct((p.currentBtc/p.targetBTC)*100,2)} → 1 BTC`;
-  if (mode === 'progress') { main = `${fmtPct((p.currentBtc/p.targetBTC)*100,2)} to 1 BTC`; sub = 'Stacking consistently.'; }
-  if (mode === 'stealth') { main = 'Stacking Bitcoin quietly'; sub = 'Stay humble. Stack sats.'; }
-  if (mode === 'plan') { main = `${fmtNum(p.estimatedBTCAtTargetAge,3)} BTC by age ${p.targetAge}`; sub = `DCA-only path`; }
-  document.getElementById('shareCard').innerHTML = `<p class="kicker">BTC Stacking</p><p class="big">${main}</p><p class="sub">${sub}</p><p class="subtle" style="margin-top:16px">btcstack.app</p>`;
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'btc-stacking.png';
+    a.click();
+  });
+  document.getElementById('shareIgBtn')?.addEventListener('click', () => shareFile('Stacking Bitcoin', 'ig'));
+  document.getElementById('shareFbBtn')?.addEventListener('click', () => shareFile('Stacking Bitcoin', 'fb'));
+  document.getElementById('shareXBtn')?.addEventListener('click', () => shareFile('Stacking Bitcoin', 'x'));
 }
 
 async function refreshPrice() {
@@ -222,249 +275,291 @@ async function refreshPrice() {
     if (data?.bitcoin?.usd) {
       state.settings.currentPrice = Number(data.bitcoin.usd);
       state.settings.priceUpdatedAt = new Date().toISOString();
-      persist(); render();
+      persist();
+      render();
     }
   } catch {}
 }
 
 function computeMetrics() {
   const price = Number(state.settings.currentPrice || 0);
-  const dcaBtc = state.dca.reduce((s,x)=>s+Number(x.btcQty||0),0);
-  const dipBtc = state.dip.reduce((s,x)=>s+Number(x.btcQty||0),0);
+  const dcaBtc = state.dca.reduce((s, x) => s + Number(x.btcQty || 0), 0);
+  const dipBtc = state.dip.reduce((s, x) => s + Number(x.btcQty || 0), 0);
   const totalBtc = dcaBtc + dipBtc;
-  const dcaInvested = state.dca.reduce((s,x)=>s+Math.abs(Number(x.usdtAmount||0)),0);
-  const dipInvested = state.dip.reduce((s,x)=>s+Math.abs(Number(x.usdtAmount||0)),0);
+  const dcaInvested = state.dca.reduce((s, x) => s + Math.abs(Number(x.usdtAmount || 0)), 0);
+  const dipInvested = state.dip.reduce((s, x) => s + Math.abs(Number(x.usdtAmount || 0)), 0);
   const totalInvested = dcaInvested + dipInvested;
   const avgCost = totalBtc > 0 ? totalInvested / totalBtc : 0;
-  const futuresPnl = state.futures.reduce((s,x)=>s+Number(x.pnlUsdt||0),0);
-  const gridPnl = state.grid.reduce((s,x)=>s+Number(x.netProfitUsdt||0),0);
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const futuresPnl = state.futures.reduce((s, x) => s + Number(x.pnlUsdt || 0), 0);
+  const gridPnl = state.grid.reduce((s, x) => s + Number(x.netProfitUsdt || 0), 0);
+  const currentMonth = new Date().toISOString().slice(0, 7);
   const monthDca = state.dca.filter(x => String(x.date).slice(0,7) === currentMonth);
   const monthEntries = monthDca.length;
-  const monthBtc = monthDca.reduce((s,x)=>s+Number(x.btcQty||0),0);
-  const monthInvested = monthDca.reduce((s,x)=>s+Math.abs(Number(x.usdtAmount||0)),0);
+  const monthBtc = monthDca.reduce((s, x) => s + Number(x.btcQty || 0), 0);
+  const monthInvested = monthDca.reduce((s, x) => s + Math.abs(Number(x.usdtAmount || 0)), 0);
   const futuresToBtc = price > 0 ? futuresPnl / price : 0;
   const gridToBtc = price > 0 ? gridPnl / price : 0;
-  return { price,dcaBtc,dipBtc,totalBtc,dcaInvested,totalInvested,avgCost,futuresPnl,gridPnl,monthEntries,monthBtc,monthInvested,futuresToBtc,gridToBtc,totalConverted:futuresToBtc+gridToBtc };
+  return { price, dcaBtc, dipBtc, totalBtc, dcaInvested, totalInvested, avgCost, futuresPnl, gridPnl, monthEntries, monthBtc, monthInvested, futuresToBtc, gridToBtc, totalConverted: futuresToBtc + gridToBtc };
 }
 
 function estimateDcaProjection() {
   const m = computeMetrics();
+  const currentBtc = Number(state.settings.manualCurrentDcaBtc || m.dcaBtc);
   const targetBTC = Number(state.settings.goalBtc || 1);
   const currentAge = Number(state.settings.currentAge || 29);
   const targetAge = Number(state.settings.targetAge || 40);
   const monthlyDcaUsd = Number(state.settings.monthlyDcaUsd || 300);
   const annualGrowthRate = Number(state.settings.annualGrowthRate || 0) / 100;
-  let currentBtc = m.dcaBtc;
-  if (state.settings.startingSource === 'total') currentBtc = m.totalBtc;
-  if (state.settings.startingSource === 'custom' && state.settings.manualCurrentDcaBtc != null) currentBtc = Number(state.settings.manualCurrentDcaBtc || 0);
   const currentPrice = Number(state.settings.currentPrice || 0);
-  const monthsLeft = Math.max(1, Math.round((targetAge - currentAge) * 12));
-  const monthlyGrowthRate = Math.pow(1 + annualGrowthRate, 1/12) - 1;
-  let btc = currentBtc, price = currentPrice;
-  const path = [{ age: currentAge, btc: currentBtc }];
-  for (let i=1;i<=monthsLeft;i++) {
+  const monthsLeft = Math.max(0, Math.round((targetAge - currentAge) * 12));
+  const monthlyGrowthRate = Math.pow(1 + annualGrowthRate, 1 / 12) - 1;
+  let btc = currentBtc;
+  let price = currentPrice;
+  const path = [{ month: 0, age: currentAge, btc }];
+  for (let i = 1; i <= monthsLeft; i++) {
     btc += monthlyDcaUsd / price;
     price *= (1 + monthlyGrowthRate);
-    path.push({ age: currentAge + i/12, btc });
+    path.push({ month: i, age: currentAge + (i / 12), btc });
   }
   const estimatedBTCAtTargetAge = btc;
   const shortfall = Math.max(0, targetBTC - estimatedBTCAtTargetAge);
-  const onTrack = shortfall <= 0.0000001;
-  let reachAge = null;
-  if (onTrack) {
-    for (let i=0;i<path.length;i++) if (path[i].btc >= targetBTC) { reachAge = path[i].age; break; }
-  } else {
-    let simBtc = currentBtc, simPrice = currentPrice, months = 0;
-    while (simBtc < targetBTC && months < 1200) {
-      simBtc += monthlyDcaUsd / simPrice;
-      simPrice *= (1 + monthlyGrowthRate);
-      months++;
-    }
-    reachAge = currentAge + months / 12;
+  let btc2 = currentBtc;
+  let price2 = currentPrice;
+  let months = 0;
+  while (btc2 < targetBTC && months < 1200) {
+    btc2 += monthlyDcaUsd / price2;
+    price2 *= (1 + monthlyGrowthRate);
+    months++;
   }
-  const lateYears = Math.max(0, reachAge - targetAge);
-  const flatMonthsLeft = Math.max(1, Math.round((targetAge - currentAge) * 12));
-  const reqBtcPerMonth = Math.max(0, targetBTC - currentBtc) / flatMonthsLeft;
-  const requiredDca = reqBtcPerMonth * currentPrice;
-  const suggestions = [100,300].map(add => {
-    const projected = simulateWithMonthly(currentBtc,currentPrice,monthlyDcaUsd+add,monthlyGrowthRate,monthsLeft);
-    return { icon:'💵', title:`Add $${add} / month`, body:`Projected ${fmtNum(projected,3)} BTC by age ${targetAge}` };
-  });
-  const growthProjected = simulateWithMonthly(currentBtc,currentPrice,monthlyDcaUsd,Math.pow(1+0.15,1/12)-1,monthsLeft);
-  suggestions.push({ icon:'📈', title:'Increase growth to 15%', body:`Projected ${fmtNum(growthProjected,3)} BTC by age ${targetAge}` });
-  return { currentBtc,targetBTC,currentAge,targetAge,monthlyDcaUsd,currentPrice,estimatedBTCAtTargetAge,shortfall,onTrack,reachAge,lateYears,requiredDca,path,suggestions };
-}
-function simulateWithMonthly(currentBtc,currentPrice,monthlyDca,monthlyGrowthRate,monthsLeft){ let btc=currentBtc, price=currentPrice; for(let i=0;i<monthsLeft;i++){ btc+=monthlyDca/price; price*=1+monthlyGrowthRate; } return btc; }
+  const reachAge = currentAge + months / 12;
 
-function renderStatCards(elId, items) {
-  document.getElementById(elId).innerHTML = items.map(item => `<div class="mini-stat"><p class="label">${item.label}</p><p class="value ${item.className||''}">${item.value}</p><p class="hint">${item.hint||''}</p></div>`).join('');
+  const requiredDca = solveRequiredDca({ currentBtc, targetBTC, currentAge, targetAge, currentPrice, annualGrowthRate });
+
+  const suggestions = [100, 300, 0].map((extra, idx) => {
+    const growthAdj = idx === 2 ? 0.15 : annualGrowthRate;
+    const monthly = monthlyDcaUsd + extra;
+    const scenario = estimateWithInputs({ currentBtc, targetBTC, currentAge, targetAge, currentPrice, monthlyDcaUsd: monthly, annualGrowthRate: growthAdj });
+    return {
+      title: idx === 2 ? 'Increase growth to 15%' : `Add $${extra}/month`,
+      body: idx === 2 ? `Reach at age ${scenario.reachAge.toFixed(1)}` : `Reach at age ${scenario.reachAge.toFixed(1)}`,
+      sub: idx === 2 ? `${Math.max(0, scenario.reachAge - currentAge).toFixed(1)} years later` : scenario.onTrack ? 'On target' : `${Math.max(0, scenario.reachAge - targetAge).toFixed(1)} years late`
+    };
+  });
+
+  return {
+    currentBtc, targetBTC, currentAge, targetAge, currentPrice, monthlyDcaUsd, annualGrowthRate,
+    monthsLeft, estimatedBTCAtTargetAge, shortfall, reachAge, lateYears: Math.max(0, reachAge - targetAge), requiredDca, path, suggestions,
+    onTrack: estimatedBTCAtTargetAge >= targetBTC
+  };
 }
+
+function estimateWithInputs({ currentBtc, targetBTC, currentAge, targetAge, currentPrice, monthlyDcaUsd, annualGrowthRate }) {
+  const monthsLeft = Math.max(0, Math.round((targetAge - currentAge) * 12));
+  const monthlyGrowthRate = Math.pow(1 + annualGrowthRate, 1 / 12) - 1;
+  let btc = currentBtc;
+  let price = currentPrice;
+  for (let i = 1; i <= monthsLeft; i++) {
+    btc += monthlyDcaUsd / price;
+    price *= (1 + monthlyGrowthRate);
+  }
+  let btc2 = currentBtc;
+  let price2 = currentPrice;
+  let months = 0;
+  while (btc2 < targetBTC && months < 1200) {
+    btc2 += monthlyDcaUsd / price2;
+    price2 *= (1 + monthlyGrowthRate);
+    months++;
+  }
+  return { projectedBtc: btc, reachAge: currentAge + months / 12, onTrack: btc >= targetBTC };
+}
+
+function solveRequiredDca({ currentBtc, targetBTC, currentAge, targetAge, currentPrice, annualGrowthRate }) {
+  let low = 0, high = 10000;
+  for (let i = 0; i < 40; i++) {
+    const mid = (low + high) / 2;
+    const result = estimateWithInputs({ currentBtc, targetBTC, currentAge, targetAge, currentPrice, monthlyDcaUsd: mid, annualGrowthRate });
+    if (result.projectedBtc >= targetBTC) high = mid; else low = mid;
+  }
+  return high;
+}
+
+function renderStats(elId, items) {
+  document.getElementById(elId).innerHTML = items.map(item => `
+    <div class="stat-card">
+      <p class="meta-label">${item.label}</p>
+      <span class="stat-value ${item.className || ''}">${item.value}</span>
+      <span class="stat-hint">${item.hint || ''}</span>
+    </div>
+  `).join('');
+}
+
 function renderRecent(elId, rows) {
-  document.getElementById(elId).innerHTML = rows.map(r => {
-    const d = r.date || '';
-    const [line1, line2=''] = d.split('|');
-    return `<div class="list-row">
-      <div class="badge ${r.kind||''}">${r.badge}</div>
-      <div class="row-main">
-        <p class="title ${r.wrapDate?'date-block':''}">${r.wrapDate?`<span class="line1">${line1}</span><span class="line2">${line2}</span>`:r.title}</p>
-        <p class="sub">${r.subtitle||''}</p>
+  document.getElementById(elId).innerHTML = rows.map(row => `
+    <div class="list-row">
+      <div class="row-left">
+        <div class="badge ${row.kind || ''}">${row.badge || (row.kind || '•').slice(0,3).toUpperCase()}</div>
+        <div>
+          <p class="row-title">${row.title}</p>
+          <p class="row-sub">${row.subtitle}</p>
+        </div>
       </div>
-      <div class="row-side">
-        <p class="value ${r.className||''}">${r.value}</p>
-        <p class="sub">${r.subValue||''}</p>
+      <div class="row-value">
+        <strong class="${row.className || ''}">${row.value}</strong>
+        <span>${row.subValue || ''}</span>
       </div>
-    </div>`;
-  }).join('');
+    </div>
+  `).join('');
 }
 
-function drawProjectionChart(svgId, p) {
+function drawLineChart(svgId, points, opts = {}) {
   const svg = document.getElementById(svgId);
-  const W=320,H=190,pad={l:46,r:14,t:16,b:26};
-  const years = [p.currentAge, Math.round((p.currentAge+p.targetAge)/2), p.targetAge];
-  const maxY = Math.max(1.2, p.targetBTC*1.05, p.estimatedBTCAtTargetAge*1.2);
-  const xScale = age => pad.l + ((age - p.currentAge) / (p.targetAge - p.currentAge)) * (W-pad.l-pad.r);
-  const yScale = v => H-pad.b - (v/maxY)*(H-pad.t-pad.b);
-  const sample = [p.currentAge, p.currentAge+((p.targetAge-p.currentAge)*0.5), p.targetAge].map(age => {
-    const nearest = p.path.reduce((a,b)=> Math.abs(b.age-age)<Math.abs(a.age-age)?b:a, p.path[0]);
-    return nearest;
-  });
-  const areaPath = sample.map((pt,i)=>`${i?'L':'M'} ${xScale(pt.age)} ${yScale(pt.btc)}`).join(' ') + ` L ${xScale(p.targetAge)} ${H-pad.b} L ${xScale(p.currentAge)} ${H-pad.b} Z`;
-  const linePath = sample.map((pt,i)=>`${i?'L':'M'} ${xScale(pt.age)} ${yScale(pt.btc)}`).join(' ');
-  const yticks = [0, maxY/3, (maxY*2)/3, maxY].map(v => `<text class="axis" x="4" y="${yScale(v)+4}">${fmtNum(v,1)} BTC</text><line class="grid-line" x1="${pad.l}" x2="${W-pad.r}" y1="${yScale(v)}" y2="${yScale(v)}"></line>`).join('');
-  const goalY = yScale(p.targetBTC);
-  svg.innerHTML = `${yticks}<line class="goal-line" x1="${pad.l}" x2="${W-pad.r}" y1="${goalY}" y2="${goalY}"></line><path class="path-area" d="${areaPath}"></path><path class="path-line" d="${linePath}"></path>${years.map(y=>`<text class="axis" x="${xScale(y)}" y="${H-4}" text-anchor="middle">${Math.round(y)}</text>`).join('')}<rect class="path-pill" x="${xScale(p.targetAge)-46}" y="${yScale(p.estimatedBTCAtTargetAge)-16}" rx="12" ry="12" width="64" height="24"></rect><text class="path-pill-text" x="${xScale(p.targetAge)-14}" y="${yScale(p.estimatedBTCAtTargetAge)}" text-anchor="middle">${fmtNum(p.estimatedBTCAtTargetAge,3)}</text>`;
-}
-
-function drawFuturesChart(svgId, trades) {
-  const svg = document.getElementById(svgId); const W=320,H=190,pad={l:40,r:16,t:18,b:28};
-  const points=[]; let acc=0; trades.forEach((t,i)=>{ acc += Number(t.pnlUsdt||0); points.push({x:i+1,y:acc}); });
-  if (!points.length) { svg.innerHTML=''; return; }
-  const values = points.map(p=>p.y).concat([0]);
-  const minY = Math.min(...values), maxY = Math.max(...values);
-  const span = Math.max(1, maxY-minY);
-  const yMin = minY - span*0.08, yMax = maxY + span*0.08;
-  const xScale = x => pad.l + ((x-1)/(Math.max(points.length-1,1)))*(W-pad.l-pad.r);
-  const yScale = y => H-pad.b - ((y-yMin)/(yMax-yMin))*(H-pad.t-pad.b);
-  const path = points.map((p,i)=>`${i?'L':'M'} ${xScale(p.x)} ${yScale(p.y)}`).join(' ');
-  const yTicks = [yMax, (yMax+yMin)/2, yMin].map(v=>`<text class="axis" x="4" y="${yScale(v)+4}">${fmtUsd(v,0)}</text><line class="grid-line" x1="${pad.l}" x2="${W-pad.r}" y1="${yScale(v)}" y2="${yScale(v)}"></line>`).join('');
-  const zeroY = yScale(0);
-  const xTicks = points.map((p,i)=>`<text class="axis" x="${xScale(p.x)}" y="${H-4}" text-anchor="middle">${i+1}</text>`).join('');
-  svg.innerHTML = `${yTicks}<line class="goal-line" x1="${pad.l}" x2="${W-pad.r}" y1="${zeroY}" y2="${zeroY}"></line><path class="path-line" d="${path}"></path>${xTicks}`;
+  const W = 320, H = 180, P = { l: 42, r: 14, t: 14, b: 24 };
+  const maxX = Math.max(...points.map(p => p.x), 1);
+  const rawMin = Math.min(...points.map(p => p.y), opts.goal ?? Infinity, 0);
+  const rawMax = Math.max(...points.map(p => p.y), opts.goal || 0, 1);
+  const minY = Math.min(0, rawMin);
+  const maxY = rawMax === minY ? minY + 1 : rawMax;
+  const x = v => P.l + (v / maxX) * (W - P.l - P.r);
+  const y = v => H - P.b - ((v - minY) / (maxY - minY)) * (H - P.t - P.b);
+  const line = points.map((p, i) => `${i ? 'L' : 'M'} ${x(p.x).toFixed(2)} ${y(p.y).toFixed(2)}`).join(' ');
+  const baseY = y(Math.max(0,minY));
+  const area = `M ${x(points[0].x)} ${baseY} ` + points.map(p => `L ${x(p.x).toFixed(2)} ${y(p.y).toFixed(2)}`).join(' ') + ` L ${x(points.at(-1).x)} ${baseY} Z`;
+  const yTicksVals = [minY, (minY+maxY)/2, maxY].map(v=> Number(v.toFixed(3)));
+  const yTicks = yTicksVals.map(v => `<line class="axis" x1="${P.l}" y1="${y(v)}" x2="${W-P.r}" y2="${y(v)}"></line><text x="6" y="${y(v)+4}">${opts.currency ? (v<0?'-':'') + '$'+Math.abs(Math.round(v)) : v.toFixed(1)+' BTC'}</text>`).join('');
+  const goalLine = opts.goal != null ? `<line class="goal-line" x1="${P.l}" y1="${y(opts.goal)}" x2="${W-P.r}" y2="${y(opts.goal)}"></line>` : '';
+  const xticks = points.filter((_,i)=> i===0 || i===points.length-1 || i===Math.floor(points.length/2)).map(p => `<text x="${x(p.x)}" y="${H-6}" text-anchor="middle">${p.label}</text>`).join('');
+  const endX = x(points.at(-1).x), endY = y(points.at(-1).y);
+  const pillText = opts.pillText || `${points.at(-1).y.toFixed(3)} BTC`;
+  svg.innerHTML = `${yTicks}${goalLine}<path class="data-area" d="${area}"></path><path class="data-line" d="${line}"></path><circle class="end-dot" cx="${endX}" cy="${endY}" r="3.5"></circle><rect class="label-pill" x="${Math.max(P.l, endX-8)}" y="${Math.max(P.t, endY-16)}" rx="10" ry="10" width="66" height="20"></rect><text class="label-text" x="${Math.max(P.l+8, endX+1)}" y="${Math.max(P.t+13, endY-3)}">${pillText}</text>${xticks}`;
 }
 
 function render() {
-  document.getElementById('headerDate').textContent = formatHeaderDate();
-  const m = computeMetrics(); const p = estimateDcaProjection();
+  document.getElementById('headerDate').textContent = todayStr();
+  const m = computeMetrics();
+  const p = estimateDcaProjection();
 
-  document.getElementById('heroBtc').textContent = fmtNum(m.totalBtc,4);
-  document.getElementById('heroGoal').textContent = fmtNum(state.settings.goalBtc,4);
-  const goalPct = clamp((m.totalBtc/state.settings.goalBtc)*100, 0, 100);
+  document.getElementById('heroBtc').textContent = fmtNum(m.totalBtc, 4);
+  document.getElementById('heroGoal').textContent = fmtNum(state.settings.goalBtc, 4);
+  const goalPct = Math.min(100, (m.totalBtc / state.settings.goalBtc) * 100);
   document.getElementById('goalProgressFill').style.width = `${goalPct}%`;
-  document.getElementById('goalPercent').textContent = fmtPct(goalPct,2);
-  document.getElementById('remainingBtc').textContent = `${fmtNum(Math.max(0, state.settings.goalBtc-m.totalBtc),4)} BTC`;
-  document.getElementById('goalStatus').textContent = m.totalBtc >= state.settings.goalBtc ? 'Reached' : m.totalBtc >= state.settings.goalBtc*0.25 ? 'On track' : 'Starting';
+  document.getElementById('goalPercent').textContent = fmtPct(goalPct, 2);
+  document.getElementById('remainingBtc').textContent = `${fmtNum(Math.max(0, state.settings.goalBtc - m.totalBtc), 4)} BTC`;
+  document.getElementById('goalStatus').textContent = m.totalBtc >= state.settings.goalBtc ? 'Reached' : m.totalBtc >= state.settings.goalBtc * 0.5 ? 'On track' : 'Starting';
 
-  renderStatCards('homeStats', [
-    { label:'Avg Cost', value:fmtUsd(m.avgCost,0), hint:'per BTC' },
-    { label:'Capital Deployed', value:fmtUsd(m.totalInvested,0), hint:'USD' },
-    { label:'BTC Stacked', value:fmtNum(m.totalBtc,4), hint:'BTC' }
+  renderStats('homeStats', [
+    { label: 'Avg Cost', value: fmtUsd(m.avgCost, 0), hint: 'per BTC' },
+    { label: 'Capital Deployed', value: fmtUsd(m.totalInvested, 0), hint: 'USD' },
+    { label: 'BTC Stacked', value: fmtNum(m.totalBtc, 4), hint: 'BTC' }
   ]);
 
-  const setSigned = (id,val,fmtFn,unit='') => { const el=document.getElementById(id); el.textContent = `${val>=0?'+':'-'}${fmtFn(Math.abs(val))}${unit}`; el.className = val>=0?'positive':'negative'; };
-  document.getElementById('futuresCash').textContent = fmtUsd(m.futuresPnl,2); document.getElementById('futuresCash').className = m.futuresPnl>=0?'positive':'negative';
-  document.getElementById('gridCash').textContent = fmtUsd(m.gridPnl,2); document.getElementById('gridCash').className = m.gridPnl>=0?'positive':'negative';
-  document.getElementById('futuresToBtc').textContent = signBtc(m.futuresToBtc,4); document.getElementById('futuresToBtc').className = m.futuresToBtc>=0?'positive':'negative';
-  document.getElementById('gridToBtc').textContent = signBtc(m.gridToBtc,4); document.getElementById('gridToBtc').className = m.gridToBtc>=0?'positive':'negative';
-  document.getElementById('totalConverted').textContent = signBtc(m.totalConverted,4); document.getElementById('totalConverted').className = `big ${m.totalConverted>=0?'positive':'negative'}`;
+  document.getElementById('futuresCash').textContent = fmtUsd(m.futuresPnl, 2);
+  document.getElementById('futuresCash').className = m.futuresPnl >= 0 ? 'positive' : 'negative';
+  document.getElementById('gridCash').textContent = fmtUsd(m.gridPnl, 2);
+  document.getElementById('gridCash').className = m.gridPnl >= 0 ? 'positive' : 'negative';
+  document.getElementById('futuresToBtc').textContent = `${m.futuresToBtc >=0 ? '+' : ''}${fmtNum(m.futuresToBtc, 4)} BTC`;
+  document.getElementById('futuresToBtc').className = m.futuresToBtc >= 0 ? 'positive' : 'negative';
+  document.getElementById('gridToBtc').textContent = `${m.gridToBtc >=0 ? '+' : ''}${fmtNum(m.gridToBtc, 4)} BTC`;
+  document.getElementById('gridToBtc').className = m.gridToBtc >= 0 ? 'positive' : 'negative';
+  document.getElementById('totalConverted').textContent = `${m.totalConverted >=0 ? '+' : ''}${fmtNum(m.totalConverted, 4)} BTC`;
+  document.getElementById('totalConverted').className = `big ${m.totalConverted >= 0 ? 'positive' : 'negative'}`;
 
-  document.getElementById('monthGrid').innerHTML = [
-    { value:`${Number(m.monthBtc)>=0?'+':''}${fmtNum(m.monthBtc,4)}`, label:'BTC accumulated' },
-    { value:String(m.monthEntries), label:'Entries' },
-    { value:fmtUsd(m.monthInvested,0), label:'Capital deployed' }
-  ].map(i => `<div><p class="month-number ${i.value.startsWith('+')?'positive':''}">${i.value}</p><p class="meta-label">${i.label}</p></div>`).join('');
+  document.getElementById('monthBtc').textContent = `${m.monthBtc >=0 ? '+' : ''}${fmtNum(m.monthBtc, 4)}`;
+  document.getElementById('monthEntries').textContent = String(m.monthEntries);
+  document.getElementById('monthInvested').textContent = fmtUsd(m.monthInvested, 0);
 
-  const recentRows = state.dca.slice().sort((a,b)=>sortDateDesc(a,b)).slice(0,4).map(x => ({ kind:'dca', badge:'DCA', title:new Date(x.date).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}), subtitle:x.note || x.source, value:signBtc(x.btcQty,4), subValue:fmtUsd(x.price,0), className:x.btcQty>=0?'positive':'negative' }));
+  const recentRows = [
+    ...state.dca.slice(0,4).map(x => ({ kind:'dca', badge:'DCA', title: new Date(x.date).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}), subtitle:`${x.type} · ${x.note || x.source}`, value:`${x.btcQty >=0 ? '+' : ''}${fmtNum(x.btcQty,4)} BTC`, subValue: fmtUsd(x.usdtAmount,2), className: x.btcQty>=0 ? 'positive':'' })),
+    ...state.futures.slice(0,2).map(x => ({ kind:'futures', badge:'FUT', title: new Date(x.dateClose).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}), subtitle:`${x.side} · ${x.mode}`, value:fmtUsd(x.pnlUsdt,2), subValue:'Closed trade', className: x.pnlUsdt>=0 ? 'positive':'negative' }))
+  ].sort((a,b)=>0).slice(0,4);
   renderRecent('recentActivity', recentRows);
 
-  renderProjection(p,m);
+  renderProjection(p);
   renderFutures(m);
-  renderCash(m);
+  renderMore(m);
 }
 
-function renderProjection(p,m) {
-  document.getElementById('projCurrentBtc').textContent = fmtNum(p.currentBtc,4);
-  document.getElementById('projTargetBtc').textContent = fmtNum(p.targetBTC,4);
-  document.getElementById('projTargetValue').textContent = fmtNum(p.targetBTC,4);
+function renderProjection(p) {
+  document.getElementById('projCurrentBtc').textContent = fmtNum(p.currentBtc, 4);
+  document.getElementById('projTargetBtc').textContent = fmtNum(p.targetBTC, 4);
+  document.getElementById('projTargetValue').textContent = fmtNum(p.targetBTC, 4);
   document.getElementById('projTargetAgeInline').textContent = p.targetAge;
-  document.getElementById('projTimeLeft').textContent = `${p.targetAge - p.currentAge} years · ${(p.targetAge - p.currentAge) * 12} months`;
-  const projPct = clamp((p.currentBtc/p.targetBTC)*100,0,100);
-  document.getElementById('projProgressFill').style.width = `${projPct}%`;
-  document.getElementById('projProgressPct').textContent = fmtPct(projPct,2);
-  document.getElementById('projHeroNote').textContent = 'Keep stacking. You’re early.';
-  document.getElementById('projSummaryTopic').textContent = `At age ${p.targetAge}`;
-  document.getElementById('projAtTargetAge').textContent = fmtNum(p.estimatedBTCAtTargetAge,3);
+  document.getElementById('projTimeLeft').textContent = `${p.targetAge - p.currentAge} years`;
+  const pct = Math.min(100, p.currentBtc / p.targetBTC * 100);
+  document.getElementById('projProgressFill').style.width = `${pct}%`;
+  document.getElementById('projProgressPct').textContent = fmtPct(pct, 2);
+  document.getElementById('projHeroNote').textContent = p.currentBtc < p.targetBTC * 0.1 ? 'Keep stacking. You’re early.' : 'Stay consistent. You are building your stack.';
+  document.getElementById('projSummaryAge').textContent = p.targetAge;
+  document.getElementById('projAtTargetAge').textContent = fmtNum(p.estimatedBTCAtTargetAge, 3);
   const chip = document.getElementById('projGapChip');
-  chip.textContent = `${fmtNum(p.shortfall,3)} BTC short`;
-  chip.className = 'status-chip';
-  const reachText = p.reachAge > 100 ? 'Beyond 100+' : `Age ${p.reachAge.toFixed(1)}`;
-  document.getElementById('projectionMiniCards').innerHTML = [
-    { icon:'⏱', kicker:'Reach age', main:reachText, sub:'At current pace' },
-    { icon:'⚑', kicker:'Gap to goal', main:`${fmtNum(p.shortfall,3)} BTC`, sub:`By age ${p.targetAge}` },
-    { icon:'↗', kicker:'Need / mo', main:`${fmtUsd(p.requiredDca,0)}`, sub:`To hit age ${p.targetAge}` },
-  ].map(c => `<div class="mini-insight"><div class="icon">${c.icon}</div><div><p class="kicker">${c.kicker}</p><p class="main">${c.main}</p><p class="sub">${c.sub}</p></div></div>`).join('');
+  chip.textContent = p.onTrack ? 'On target' : `${fmtNum(p.shortfall, 3)} BTC short`;
+  chip.className = `status-chip ${p.onTrack ? '' : 'negative'}`;
+  document.getElementById('projReachAge').textContent = p.reachAge > 100 ? '100+' : p.reachAge.toFixed(1);
+  document.getElementById('projLateYears').textContent = p.onTrack ? 'On target' : `${fmtNum(p.shortfall, 3)} BTC`;
+  document.getElementById('projTargetAge').textContent = p.targetAge;
+  document.getElementById('projTargetAge2').textContent = p.targetAge;
+  document.getElementById('projRequiredDca').textContent = `${fmtUsd(p.requiredDca, 0)}`;
 
-  const assumptionIcons = ['👤','⚑','₿','💵','↗','↗'];
   document.getElementById('projectionAssumptions').innerHTML = [
     ['Current Age', `${p.currentAge}`, 'years'],
     ['Target Age', `${p.targetAge}`, 'years'],
-    ['Current DCA', `${fmtNum(p.currentBtc,4)}`, 'BTC'],
-    ['Monthly DCA', fmtUsd(p.monthlyDcaUsd,0), 'per month'],
-    ['BTC Price', fmtUsd(p.currentPrice,0), 'per BTC'],
+    ['Current DCA', `${fmtNum(p.currentBtc, 4)}`, 'BTC'],
+    ['Monthly DCA', fmtUsd(p.monthlyDcaUsd, 0), 'per month'],
+    ['BTC Price', fmtUsd(p.currentPrice, 0), 'per BTC'],
     ['Price Growth', `${state.settings.annualGrowthRate}%`, 'per year']
-  ].map(([label,value,hint],i)=>`<div class="assumption-card"><div class="icon">${assumptionIcons[i]}</div><p class="label">${label}</p><p class="value">${value}</p><p class="hint">${hint}</p></div>`).join('');
+  ].map(([label,value,hint]) => `
+    <div class="assumption-card">
+      <p class="label">${label}</p>
+      <p class="value">${value}</p>
+      <p class="hint">${hint}</p>
+    </div>
+  `).join('');
   document.getElementById('projectionFootnote').textContent = `Projections use an average annual BTC price growth of ${state.settings.annualGrowthRate}%. Live BTC price updates automatically.`;
 
-  drawProjectionChart('projectionChart', p);
-  document.getElementById('projectionCallout').innerHTML = `At age <strong>${p.targetAge}</strong>, your DCA-only path reaches <strong>${fmtNum(p.estimatedBTCAtTargetAge,3)} BTC</strong>. To hit <strong>1 BTC</strong>, raise DCA to <strong>${fmtUsd(p.requiredDca,0)}/month</strong>.`;
-
-  document.getElementById('projectionSuggestions').innerHTML = p.suggestions.map(s => `<div class="suggestion-card"><div class="icon">${s.icon}</div><div><p class="title">${s.title}</p><p class="body">${s.body}</p></div></div>`).join('');
-
-  renderRecent('dcaList', state.dca.slice().sort((a,b)=>sortDateDesc(a,b)).slice(0,12).map(x => ({ kind:'dca', badge:'DCA', title:new Date(x.date).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}), subtitle:x.note || x.source, value:signBtc(x.btcQty,4), subValue:fmtUsd(x.price,0), className:x.btcQty>=0?'positive':'negative' })));
-  updateShareCard();
+  drawLineChart('projectionChart', p.path.filter((_,i)=> i===0 || i===p.path.length-1 || i%24===0).map(pt => ({ x: pt.age - p.currentAge, y: pt.btc, label: `${Math.round(pt.age)}` })), { goal: p.targetBTC, pillText: `${fmtNum(p.estimatedBTCAtTargetAge, 3)} BTC` });
+  document.getElementById('projectionCallout').innerHTML = p.onTrack ? `At age <strong>${p.targetAge}</strong>, your DCA-only path reaches <strong>${fmtNum(p.estimatedBTCAtTargetAge, 3)} BTC</strong>. You are on target.` : `At age <strong>${p.targetAge}</strong>, your DCA-only path reaches <strong>${fmtNum(p.estimatedBTCAtTargetAge, 3)} BTC</strong>. Raise DCA to <strong>${fmtUsd(p.requiredDca, 0)}/month</strong>.`;
+  document.getElementById('projectionSuggestions').innerHTML = p.suggestions.map(s => `
+    <div class="suggestion-card">
+      <div>
+        <strong>${s.title}</strong>
+        <p>${String(s.body).replace(/Projected\s*/,'')}</p>
+        <p>${s.sub || ''}</p>
+      </div>
+    </div>
+  `).join('');
+  renderRecent('dcaList', state.dca.slice().sort((a,b)=>sortByDateDesc(a,b)).map(x => ({
+    kind:'dca', badge:'DCA', title:new Date(x.date).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}),
+    subtitle:(x.note || x.source).replace(/, 1m candle/g,''), value:`${x.btcQty >=0 ? '+' : ''}${fmtNum(x.btcQty,4)} BTC`, subValue: fmtUsd(x.price,0), className: x.btcQty>=0 ? 'positive':''
+  })).slice(0,10));
 }
 
 function renderFutures(m) {
-  renderStatCards('futuresStats', [
-    { label:'Total PnL', value:fmtUsd(m.futuresPnl,2), className:m.futuresPnl>=0?'positive':'negative', hint:'USD' },
-    { label:'Winning Trades', value:String(state.futures.filter(x => Number(x.pnlUsdt)>0).length), hint:'count' },
-    { label:'Trades', value:String(state.futures.length), hint:'total' }
+  renderStats('futuresStats', [
+    { label: 'Total PnL', value: fmtUsd(m.futuresPnl, 2), className: m.futuresPnl>=0 ? 'positive':'negative', hint: 'USD' },
+    { label: 'Winning Trades', value: String(state.futures.filter(x => Number(x.pnlUsdt) > 0).length), hint: 'count' },
+    { label: 'Trades', value: String(state.futures.length), hint: 'total' }
   ]);
-  const trades = state.futures.slice().sort((a,b)=>new Date(a.dateClose)-new Date(b.dateClose));
-  drawFuturesChart('futuresChart', trades);
-  renderRecent('futuresList', state.futures.slice().sort((a,b)=>sortDateDesc(a,b,'dateClose')).map(x => ({
-    kind:'futures', badge:'FUT', title:'', date:new Date(x.dateClose).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}).replace(',', '|'), wrapDate:true,
-    subtitle:`${x.side} · ${x.mode}${x.notes ? ' · ' + x.notes : ''}`,
-    value:fmtUsd(x.pnlUsdt,2), subValue:x.notes || '', className:x.pnlUsdt>=0?'positive':'negative'
-  })));
+  const cum = [];
+  let acc = 0;
+  state.futures.slice().sort((a,b)=>sortByDateDesc(b,a,'dateClose')).reverse().forEach((x,i)=> { acc += Number(x.pnlUsdt||0); cum.push({ x:i+1, y:acc, label:`${i+1}` }); });
+  drawLineChart('futuresChart', cum.length ? cum : [{x:0,y:0,label:'0'}], { pillText: fmtUsd(acc, 0) });
+  renderRecent('futuresList', state.futures.slice().sort((a,b)=>sortByDateDesc(a,b,'dateClose')).map(x => ({ kind:'futures', badge:'FUT', title:new Date(x.dateClose).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}), subtitle:`${x.side} · ${x.mode}${x.notes ? ' · ' + x.notes : ''}`, value:fmtUsd(x.pnlUsdt,2), subValue:'', className: x.pnlUsdt>=0?'positive':'negative' })).slice(0,10));
 }
 
-function renderCash(m) {
-  document.getElementById('liveBtcPrice').textContent = fmtUsd(m.price,0);
-  document.getElementById('priceUpdatedAt').textContent = state.settings.priceUpdatedAt ? `Updated ${new Date(state.settings.priceUpdatedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}` : 'Using saved price';
-  renderStatCards('dipStats', [
-    { label:'Total BTC', value:fmtNum(m.dipBtc,4), hint:'BTC' },
-    { label:'Capital Used', value:fmtUsd(state.dip.reduce((s,x)=>s+Math.abs(Number(x.usdtAmount||0)),0),0), hint:'USD' },
-    { label:'Entry Count', value:String(state.dip.length), hint:'entries' }
+function renderMore(m) {
+  document.getElementById('liveBtcPrice').textContent = fmtUsd(m.price, 0);
+  document.getElementById('priceUpdatedAt').textContent = state.settings.priceUpdatedAt ? `Updated ${new Date(state.settings.priceUpdatedAt).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}` : 'Saved price';
+  renderStats('dipStats', [
+    { label: 'Total BTC', value: fmtNum(m.dipBtc, 4), hint: 'BTC' },
+    { label: 'Capital Used', value: fmtUsd(state.dip.reduce((s,x)=>s+Math.abs(Number(x.usdtAmount||0)),0),0), hint: 'USD' },
+    { label: 'Entry Count', value: String(state.dip.length), hint: 'entries' }
   ]);
-  renderRecent('dipList', state.dip.slice().sort((a,b)=>sortDateDesc(a,b)).slice(0,8).map(x => ({ kind:'dip', badge:'DIP', title:new Date(x.date).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}), subtitle:x.note || x.source, value:signBtc(x.btcQty,4), subValue:fmtUsd(x.price,0), className:x.btcQty>=0?'positive':'negative' })));
-  renderStatCards('gridStats', [
-    { label:'Total Profit', value:fmtUsd(m.gridPnl,2), className:m.gridPnl>=0?'positive':'negative', hint:'USD' },
-    { label:'Total Capital', value:fmtUsd(state.grid.reduce((s,x)=>s+Math.abs(Number(x.capitalUsdt||0)),0),0), hint:'USD' },
-    { label:'Runs', value:String(state.grid.length), hint:'bots' }
+  renderRecent('dipList', state.dip.slice().sort((a,b)=>sortByDateDesc(a,b)).map(x => ({ kind:'dip', badge:'DIP', title:new Date(x.date).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}), subtitle:x.note || x.source, value:`${x.btcQty >=0 ? '+' : ''}${fmtNum(x.btcQty,4)} BTC`, subValue:fmtUsd(x.price,0), className: x.btcQty>=0 ? 'positive':'' })).slice(0,8));
+  renderStats('gridStats', [
+    { label: 'Total Profit', value: fmtUsd(m.gridPnl,2), className: m.gridPnl>=0 ? 'positive':'negative', hint:'USD' },
+    { label: 'Total Capital', value: fmtUsd(state.grid.reduce((s,x)=>s+Math.abs(Number(x.capitalUsdt||0)),0),0), hint:'USD' },
+    { label: 'Runs', value: String(state.grid.length), hint:'bots' }
   ]);
-  renderRecent('gridList', state.grid.slice().sort((a,b)=>sortDateDesc(a,b,'dateEnd')).map(x => ({ kind:'grid', badge:'GRD', title:new Date(x.dateEnd).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}), subtitle:`${x.gridType} · ${x.mode}`, value:fmtUsd(x.netProfitUsdt,2), subValue:fmtPct(x.roi,2), className:x.netProfitUsdt>=0?'positive':'negative' })));
+  renderRecent('gridList', state.grid.slice().sort((a,b)=>sortByDateDesc(a,b,'dateEnd')).map(x => ({ kind:'grid', badge:'GRD', title:new Date(x.dateEnd).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}), subtitle:`${x.gridType} · ${x.mode}`, value:fmtUsd(x.netProfitUsdt,2), subValue:fmtPct(x.roi,2), className: x.netProfitUsdt>=0?'positive':'negative' })).slice(0,8));
 }
 
 document.addEventListener('DOMContentLoaded', init);

@@ -25,7 +25,7 @@
           <div class="card-head">
             <div>
               <p class="eyebrow">BTC Goal</p>
-              <div class="hero-number"><span id="heroBtc"></span><small>BTC</small></div>
+              <h2 class="hero-number"><span id="heroBtc"></span><small> BTC</small></h2>
               <p class="subtle">Target: <span id="heroGoal"></span> BTC</p>
             </div>
             <button class="pill-btn" id="editGoalBtn">Edit Goal</button>
@@ -48,7 +48,7 @@
           </div>
         </section>
 
-        <section class="stats-three" id="homeStats"></section>
+        <section class="split-grid" id="homeStats"></section>
 
         <section class="card">
           <div class="card-head compact">
@@ -88,7 +88,20 @@
 
         <section class="card month-card">
           <div class="card-head compact"><h3>This Month</h3></div>
-          <div class="month-grid" id="monthGrid"></div>
+          <div class="month-grid">
+            <div>
+              <p class="month-number positive" id="monthBtc"></p>
+              <p class="meta-label">BTC accumulated</p>
+            </div>
+            <div>
+              <p class="month-number" id="monthEntries"></p>
+              <p class="meta-label">Entries</p>
+            </div>
+            <div>
+              <p class="month-number" id="monthInvested"></p>
+              <p class="meta-label">Capital deployed</p>
+            </div>
+          </div>
         </section>
 
         <section class="card">
@@ -98,29 +111,33 @@
       </section>
 
       <section class="screen" id="screen-dca">
-        <section class="section-intro with-action">
+        <section class="screen-header dca-subhead">
           <div>
             <p class="eyebrow">DCA only</p>
-            <p class="subtle intro-sub">Your DCA-only path to 1 BTC</p>
+            <p class="subtle">Your DCA-only path to 1 BTC</p>
           </div>
-          <button class="pill-btn" id="shareBtn">Share</button>
+          <button class="pill-btn" id="shareProgressBtn">Share</button>
         </section>
 
         <section class="card projection-hero">
           <div class="projection-top">
-            <div class="projection-left">
+            <div>
               <p class="eyebrow">Current DCA Stack</p>
-              <div class="hero-number projection-number"><span id="projCurrentBtc"></span><small>BTC</small></div>
-              <p class="subtle">of <span id="projTargetBtc"></span> BTC</p>
+              <h2 class="hero-number"><span id="projCurrentBtc"></span><small> BTC</small></h2>
+              
             </div>
-            <div class="projection-right">
-              <div class="vr"></div>
-              <div>
-                <p class="eyebrow">Target</p>
-                <p class="side-value"><span id="projTargetValue"></span> BTC</p>
-                <p class="subtle">By age <span id="projTargetAgeInline"></span></p>
-                <p class="subtle time-left"><strong id="projTimeLeft"></strong></p>
+            <div class="projection-side">
+              <div class="target-meta-row">
+                <div>
+                  <p class="eyebrow">Target</p>
+                  <p class="side-value"><span id="projTargetValue"></span> BTC</p>
+                </div>
+                <div>
+                  <p class="eyebrow">By age</p>
+                  <p class="side-value"><span id="projTargetAgeInline"></span></p>
+                </div>
               </div>
+              <div class="subtle block-top"><strong id="projTimeLeft"></strong> left</div>
             </div>
           </div>
           <div class="progress-wrap compact-top">
@@ -133,11 +150,27 @@
         <section class="card projection-summary">
           <div class="summary-left">
             <p class="eyebrow strong">Projection Summary</p>
-            <p class="subtle" id="projSummaryTopic"></p>
+            <p class="subtle">At age <span id="projSummaryAge"></span></p>
             <div class="summary-big"><span id="projAtTargetAge"></span> <small>BTC</small></div>
             <div class="status-chip" id="projGapChip"></div>
           </div>
-          <div class="summary-right vertical-cards" id="projectionMiniCards"></div>
+          <div class="summary-right stack-cards">
+            <div class="mini-card">
+              <span class="insight-label">Reach age</span>
+              <strong id="projReachAge"></strong>
+              <span class="mini-sub">At current pace</span>
+            </div>
+            <div class="mini-card">
+              <span class="insight-label">Gap to goal</span>
+              <strong id="projLateYears"></strong>
+              <span class="mini-sub">By age <span id="projTargetAge"></span></span>
+            </div>
+            <div class="mini-card">
+              <span class="insight-label">Need / mo</span>
+              <strong id="projRequiredDca"></strong>
+              <span class="mini-sub">To hit age <span id="projTargetAge2"></span></span>
+            </div>
+          </div>
         </section>
 
         <section class="card">
@@ -151,13 +184,13 @@
 
         <section class="card">
           <div class="card-head compact"><h3>Stacking Path</h3></div>
-          <svg id="projectionChart" viewBox="0 0 320 190" class="chart"></svg>
+          <svg id="projectionChart" viewBox="0 0 320 180" class="chart"></svg>
           <div class="projection-bottom-callout" id="projectionCallout"></div>
         </section>
 
         <section class="card">
           <div class="card-head compact"><h3>Close the Gap</h3></div>
-          <div class="suggestion-list" id="projectionSuggestions"></div>
+          <div class="suggestion-grid" id="projectionSuggestions"></div>
         </section>
 
         <section class="card">
@@ -167,11 +200,10 @@
       </section>
 
       <section class="screen" id="screen-futures">
-        <section class="stats-three" id="futuresStats"></section>
+        <section class="split-grid compact-grid" id="futuresStats"></section>
         <section class="card">
           <div class="card-head compact"><h3>Futures PnL</h3></div>
-          <svg id="futuresChart" viewBox="0 0 320 190" class="chart"></svg>
-          <p class="footnote">X-axis = trade number. Chart shows cumulative PnL.</p>
+          <svg id="futuresChart" viewBox="0 0 320 180" class="chart"></svg>
         </section>
         <section class="card">
           <div class="card-head compact"><h3>Trade Log</h3></div>
@@ -179,13 +211,15 @@
         </section>
       </section>
 
-      <section class="screen" id="screen-cash">
+      <section class="screen" id="screen-more">
         <section class="card">
-          <div class="card-head compact"><h3>Cash Flow Source</h3></div>
-          <div class="market-box single">
+          <div class="card-head compact"><h3>Market</h3></div>
+          <div class="market-box">
             <div>
               <p class="meta-label">BTC Price</p>
               <p class="market-price" id="liveBtcPrice"></p>
+            </div>
+            <div>
               <p class="footnote" id="priceUpdatedAt"></p>
             </div>
           </div>
@@ -193,14 +227,14 @@
 
         <section class="card">
           <div class="card-head compact"><h3>Dip Reserve</h3></div>
-          <div class="stats-three" id="dipStats"></div>
+          <div class="split-grid compact-grid" id="dipStats"></div>
           <div class="divider"></div>
           <div id="dipList" class="list"></div>
         </section>
 
         <section class="card">
           <div class="card-head compact"><h3>Grid Bot</h3></div>
-          <div class="stats-three" id="gridStats"></div>
+          <div class="split-grid compact-grid" id="gridStats"></div>
           <div class="divider"></div>
           <div id="gridList" class="list"></div>
         </section>
@@ -214,10 +248,35 @@
       <button class="nav-item" data-screen="dca">DCA</button>
       <button class="nav-item nav-add-spacer" aria-hidden="true"></button>
       <button class="nav-item" data-screen="futures">Futures</button>
-      <button class="nav-item" data-screen="cash">Cash</button>
+      <button class="nav-item" data-screen="more">Cash</button>
     </nav>
   </div>
 
+
+  <dialog id="shareDialog" class="sheet-dialog">
+    <form method="dialog" class="sheet">
+      <div class="sheet-head">
+        <h3>Share Progress</h3>
+        <button class="icon-btn" value="cancel">✕</button>
+      </div>
+      <div class="field">
+        <span>Share mode</span>
+        <div class="seg-row" id="shareModeSeg">
+          <button type="button" class="seg-btn active" data-value="amount">Amount</button>
+          <button type="button" class="seg-btn" data-value="progress">Progress</button>
+          <button type="button" class="seg-btn" data-value="stealth">Stealth</button>
+          <button type="button" class="seg-btn" data-value="plan">Plan</button>
+        </div>
+      </div>
+      <div id="sharePreview" class="share-card-preview"></div>
+      <menu class="sheet-actions share-grid">
+        <button type="button" class="ghost-btn" id="saveImageBtn">Save Image</button>
+        <button type="button" class="ghost-btn" id="shareIgBtn">IG Story</button>
+        <button type="button" class="ghost-btn" id="shareFbBtn">Facebook</button>
+        <button type="button" class="primary-btn" id="shareXBtn">Share to X</button>
+      </menu>
+    </form>
+  </dialog>
   <dialog id="goalDialog" class="sheet-dialog">
     <form method="dialog" class="sheet">
       <div class="sheet-head">
@@ -243,14 +302,7 @@
       </div>
       <label class="field"><span>Current age</span><input name="currentAge" type="number" min="18" step="1" /></label>
       <label class="field"><span>Target age</span><input name="targetAge" type="number" min="18" step="1" /></label>
-      <label class="field"><span>Starting stack source</span>
-        <select name="startingSource" id="startingSourceSelect">
-          <option value="dca">Current DCA stack</option>
-          <option value="total">Total BTC from Home</option>
-          <option value="custom">Custom amount</option>
-        </select>
-      </label>
-      <label class="field" id="customCurrentWrap"><span>Custom starting stack (BTC)</span><input name="currentDcaBtc" type="number" step="0.00000001" /></label>
+      <label class="field"><span>Current DCA stack (BTC)</span><input name="currentDcaBtc" type="number" step="0.00000001" /></label>
       <label class="field"><span>Monthly DCA (USD)</span><input name="monthlyDcaUsd" type="number" step="1" /></label>
       <label class="field"><span>Annual BTC price growth</span><input name="annualGrowthRate" type="number" step="1" /></label>
       <menu class="sheet-actions">
@@ -272,6 +324,7 @@
         <button type="button" class="seg-btn" data-value="Futures">Futures</button>
         <button type="button" class="seg-btn" data-value="Grid Bot">Grid</button>
       </div>
+
       <div id="spotFields">
         <label class="field"><span>Date</span><input name="date" type="date" required /></label>
         <label class="field"><span>Type</span><input name="type" type="text" value="BUY" /></label>
@@ -282,6 +335,7 @@
         <label class="field"><span>Location / Wallet</span><input name="location" type="text" value="Wallet" /></label>
         <label class="field"><span>Note</span><input name="note" type="text" /></label>
       </div>
+
       <div id="futuresFields" class="hidden">
         <label class="field"><span>Date Open</span><input name="dateOpen" type="date" /></label>
         <label class="field"><span>Date Close</span><input name="dateClose" type="date" /></label>
@@ -294,6 +348,7 @@
         <label class="field"><span>PNL (USD)</span><input name="pnlUsdt" type="number" step="0.01" /></label>
         <label class="field"><span>Note</span><input name="notes" type="text" /></label>
       </div>
+
       <div id="gridFields" class="hidden">
         <label class="field"><span>Date Start</span><input name="dateStart" type="date" /></label>
         <label class="field"><span>Date End</span><input name="dateEnd" type="date" /></label>
@@ -304,6 +359,7 @@
         <label class="field"><span>ROI %</span><input name="roi" type="number" step="0.01" /></label>
         <label class="field"><span>Note</span><input name="gridNote" type="text" /></label>
       </div>
+
       <menu class="sheet-actions">
         <button type="button" id="cancelEntryBtn" class="ghost-btn">Cancel</button>
         <button type="submit" class="primary-btn">Save Entry</button>
@@ -311,29 +367,6 @@
     </form>
   </dialog>
 
-  <dialog id="shareDialog" class="sheet-dialog">
-    <div class="sheet">
-      <div class="sheet-head">
-        <h3>Share Progress</h3>
-        <button type="button" class="icon-btn" id="closeShareBtn">✕</button>
-      </div>
-      <div class="seg-row" id="shareModeSeg">
-        <button type="button" class="seg-btn active" data-value="amount">Amount</button>
-        <button type="button" class="seg-btn" data-value="progress">Progress</button>
-        <button type="button" class="seg-btn" data-value="stealth">Stealth</button>
-        <button type="button" class="seg-btn" data-value="plan">Plan</button>
-      </div>
-      <div id="shareCard" class="share-card"></div>
-      <div class="share-actions-grid">
-        <button type="button" class="ghost-btn" id="saveImageBtn">Save Image</button>
-        <button type="button" class="ghost-btn" id="igShareBtn">IG Story</button>
-        <button type="button" class="ghost-btn" id="fbShareBtn">Facebook</button>
-        <button type="button" class="primary-btn" id="xShareBtn">Share to X</button>
-      </div>
-    </div>
-  </dialog>
-
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
