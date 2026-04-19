@@ -24,6 +24,9 @@
         <span class="price-sep">·</span>
         <span id="topbarThbPrice" class="price-thb">—</span>
       </div>
+      <button class="icon-btn add-top-btn" id="addBtn" aria-label="Add entry">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
       <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle theme">
         <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
       </button>
@@ -286,7 +289,7 @@
             <p class="label-xs">BTC / USD</p>
             <p class="market-price mono" id="liveBtcPrice">—</p>
           </div>
-          <div class="market-divider"></div>
+          <div class="market-price-stack-sep"></div>
           <div>
             <p class="label-xs">BTC / THB</p>
             <p class="market-price mono" id="liveBtcThb">—</p>
@@ -356,11 +359,6 @@
 
   </main>
 
-  <!-- FAB -->
-  <button id="addBtn" class="fab" aria-label="Add entry">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-  </button>
-
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
     <button class="nav-btn active" data-screen="home">
@@ -368,12 +366,11 @@
       <span>Home</span>
     </button>
     <button class="nav-btn" data-screen="dca">
-      <svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h4l2-7 4 14 2-7h4"/></svg>
       <span>DCA</span>
     </button>
-    <div class="nav-fab-gap"></div>
     <button class="nav-btn" data-screen="futures">
-      <svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14.5a3.5 3.5 0 0 1 0 7H6"/></svg>
       <span>Futures</span>
     </button>
     <button class="nav-btn" data-screen="triggers">

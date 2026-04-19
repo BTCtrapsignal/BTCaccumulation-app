@@ -153,7 +153,7 @@ function nav(screen) {
   document.querySelectorAll('.nav-btn[data-screen]').forEach(b =>
     b.classList.toggle('active', b.dataset.screen === screen));
   document.getElementById('pageTitle').textContent = TITLES[screen] || screen;
-  window.scrollTo({ top: 0, behavior: 'instant' in ScrollToOptions.prototype ? 'instant' : 'auto' });
+  window.scrollTo({ top: 0, behavior: 'auto' });
 }
 
 // ── Dialogs ───────────────────────────────────────────
@@ -207,7 +207,7 @@ function setupEntryDialog() {
   const form  = document.getElementById('entryForm');
   const close = () => dlg.close();
 
-  document.getElementById('addBtn').addEventListener('click', () => {
+  document.getElementById('addBtn')?.addEventListener('click', () => {
     form.reset();
     const today = new Date().toISOString().slice(0,10);
     ['date','dateOpen','dateClose','dateStart','dateEnd'].forEach(n => { if (form[n]) form[n].value = today; });
@@ -767,25 +767,24 @@ function renderTriggers(m) {
   const ref = m.price || state.settings.currentPrice || 0;
   setText('triggerRefPrice', fmtUsd(ref));
 
-  // Avg Cost vs Market
   setText('avgCostVal',   fmtUsd(m.avgCost));
   setText('avgMarketVal', fmtUsd(ref));
-  const diff    = ref - m.avgCost;
-  const diffPct = m.avgCost > 0 ? (diff/m.avgCost)*100 : 0;
-  const diffEl  = $$('avgVsDiff');
+  const diff = ref - m.avgCost;
+  const diffPct = m.avgCost > 0 ? (diff / m.avgCost) * 100 : 0;
+  const diffEl = $$('avgVsDiff');
   if (diffEl) {
-    diffEl.textContent = `${diff>=0?'+':''}${fmtPct(diffPct,1)}`;
-    diffEl.className   = `avg-vs-diff mono ${diff>=0?'positive':'negative'}`;
+    diffEl.textContent = `${diff >= 0 ? '+' : ''}${fmtPct(diffPct, 1)}`;
+    diffEl.className = `avg-vs-diff mono ${diff >= 0 ? 'positive' : 'negative'}`;
   }
 
   const listEl = $$('triggersList');
   if (!listEl) return;
 
-  // Build triggers: use data.json triggers if available,
-  // otherwise auto-calc from ref price
   let triggers = (state.triggers && state.triggers.length > 0)
-    ? state.triggers
+    ? state.triggers.slice()
     : buildAutoTriggers(ref, m.usdthb);
+
+  triggers = normalizeTriggers(triggers, ref, m.usdthb);
 
   if (!triggers.length) {
     listEl.innerHTML = '<p class="muted text-sm">No triggers configured.</p>';
@@ -793,41 +792,45 @@ function renderTriggers(m) {
   }
 
   listEl.innerHTML = triggers.map(t => {
-    const buyPrice = t.buyPrice || (ref * (1 + (t.drop||0)));
-    const thbUse   = t.thbUse || 0;
-    const btcEst   = thbUse > 0 && buyPrice > 0
-      ? (thbUse / m.usdthb) / buyPrice
-      : (t.btcEst || 0);
-    const isPanic  = (t.fundSource||'').toLowerCase() === 'panic';
-    const fired    = ref > 0 && ref <= buyPrice * 1.03;
+    const fired = ref > 0 && ref <= t.buyPrice * 1.03;
     return `
-      <div class="trigger-card ${fired?'trigger-fired':''}">
+      <div class="trigger-card ${fired ? 'trigger-fired' : ''}">
         <div class="trigger-top">
-          <div>
-            <span class="trigger-level-badge ${isPanic?'panic':''}">${t.level} · ${t.fundSource||''}</span>
-          </div>
-          <span class="trigger-note-text">${t.notes||''}</span>
+          <span class="trigger-level-badge ${t.fundSource === 'Panic' ? 'panic' : ''}">${t.level} · ${t.fundSource}</span>
+          <span class="trigger-note-text">${t.notes || ''}</span>
         </div>
         <div class="trigger-stats">
           <div class="trigger-stat">
             <span class="trigger-stat-label">Buy Price</span>
-            <span class="trigger-stat-value ${fired?'positive':''}">${fmtUsd(buyPrice)}</span>
+            <span class="trigger-stat-value ${fired ? 'positive' : ''}">${fmtUsd(t.buyPrice)}</span>
           </div>
           <div class="trigger-stat">
             <span class="trigger-stat-label">Drop</span>
-            <span class="trigger-stat-value negative">${((t.drop||0)*100).toFixed(0)}%</span>
+            <span class="trigger-stat-value negative">${Math.round(t.drop * 100)}%</span>
           </div>
           <div class="trigger-stat">
             <span class="trigger-stat-label">Deploy (THB)</span>
-            <span class="trigger-stat-value">${fmtThb(thbUse)}</span>
+            <span class="trigger-stat-value">${fmtThb(t.thbUse)}</span>
           </div>
           <div class="trigger-stat">
             <span class="trigger-stat-label">Est. BTC</span>
-            <span class="trigger-stat-value positive">${fmtBtc(btcEst, 4)}</span>
+            <span class="trigger-stat-value positive">${fmtBtc(t.btcEst, 4)}</span>
           </div>
         </div>
       </div>`;
   }).join('');
+}
+
+function normalizeTriggers(triggers, ref, usdthb) {
+  const sorted = triggers.map(t => ({ ...t })).sort((a, b) => (a.drop || 0) - (b.drop || 0));
+  return sorted.map((t, i) => {
+    const fundSource = i < 2 ? 'Dip' : 'Panic';
+    const level = `L${i + 1}`;
+    const buyPrice = +(t.buyPrice || (ref * (1 + (t.drop || 0))));
+    const thbUse = +(t.thbUse || 0);
+    const btcEst = thbUse > 0 && buyPrice > 0 ? (thbUse / usdthb) / buyPrice : +(t.btcEst || 0);
+    return { ...t, level, fundSource, buyPrice, thbUse, btcEst };
+  });
 }
 
 function buildAutoTriggers(ref, usdthb) {
