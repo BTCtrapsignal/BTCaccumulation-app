@@ -153,7 +153,7 @@ function nav(screen) {
   document.querySelectorAll('.nav-btn[data-screen]').forEach(b =>
     b.classList.toggle('active', b.dataset.screen === screen));
   document.getElementById('pageTitle').textContent = TITLES[screen] || screen;
-  window.scrollTo({ top: 0, behavior: 'auto' });
+  window.scrollTo({ top: 0, behavior: 'instant' in ScrollToOptions.prototype ? 'instant' : 'auto' });
 }
 
 // ── Dialogs ───────────────────────────────────────────
@@ -207,7 +207,7 @@ function setupEntryDialog() {
   const form  = document.getElementById('entryForm');
   const close = () => dlg.close();
 
-  document.getElementById('addBtn')?.addEventListener('click', () => {
+  document.getElementById('addBtn').addEventListener('click', () => {
     form.reset();
     const today = new Date().toISOString().slice(0,10);
     ['date','dateOpen','dateClose','dateStart','dateEnd'].forEach(n => { if (form[n]) form[n].value = today; });
@@ -536,7 +536,7 @@ function renderHome(m, p) {
   setText('heroBtc',   fmtBtc(m.totalBtc, 4));
   setText('heroGoal',  `${fmtBtc(state.settings.goalBtc, 4)} BTC`);
   const heroUsd = m.totalBtc * m.price;
-  setText('heroUsdValue', `${fmtUsdCompact(heroUsd)} · ${fmtThbCompact(heroUsd * m.usdthb)}`);
+  setText('heroUsdValue', `USD ${fmtUsdCompact(heroUsd)} · THB ${fmtThbCompact(heroUsd * m.usdthb)}`);
 
   const pct = Math.min(100, m.totalBtc / state.settings.goalBtc * 100);
   const fill = $$('goalProgressFill');
@@ -767,24 +767,22 @@ function renderTriggers(m) {
   const ref = m.price || state.settings.currentPrice || 0;
   setText('triggerRefPrice', fmtUsd(ref));
 
+  // Avg Cost vs Market
   setText('avgCostVal',   fmtUsd(m.avgCost));
   setText('avgMarketVal', fmtUsd(ref));
-  const diff = ref - m.avgCost;
-  const diffPct = m.avgCost > 0 ? (diff / m.avgCost) * 100 : 0;
-  const diffEl = $$('avgVsDiff');
+  const diff    = ref - m.avgCost;
+  const diffPct = m.avgCost > 0 ? (diff/m.avgCost)*100 : 0;
+  const diffEl  = $$('avgVsDiff');
   if (diffEl) {
-    diffEl.textContent = `${diff >= 0 ? '+' : ''}${fmtPct(diffPct, 1)}`;
-    diffEl.className = `avg-vs-diff mono ${diff >= 0 ? 'positive' : 'negative'}`;
+    diffEl.textContent = `${diff>=0?'+':''}${fmtPct(diffPct,1)}`;
+    diffEl.className   = `avg-vs-diff mono ${diff>=0?'positive':'negative'}`;
   }
 
   const listEl = $$('triggersList');
   if (!listEl) return;
 
-  let triggers = (state.triggers && state.triggers.length > 0)
-    ? state.triggers.slice()
-    : buildAutoTriggers(ref, m.usdthb);
-
-  triggers = normalizeTriggers(triggers, ref, m.usdthb);
+  // Build triggers from current reference price so ordering always matches the live market
+  const triggers = buildAutoTriggers(ref, m.usdthb);
 
   if (!triggers.length) {
     listEl.innerHTML = '<p class="muted text-sm">No triggers configured.</p>';
@@ -792,55 +790,52 @@ function renderTriggers(m) {
   }
 
   listEl.innerHTML = triggers.map(t => {
-    const fired = ref > 0 && ref <= t.buyPrice * 1.03;
+    const buyPrice = t.buyPrice || (ref * (1 + (t.drop||0)));
+    const thbUse   = t.thbUse || 0;
+    const btcEst   = thbUse > 0 && buyPrice > 0
+      ? (thbUse / m.usdthb) / buyPrice
+      : (t.btcEst || 0);
+    const isPanic  = (t.fundSource||'').toLowerCase() === 'panic';
+    const fired    = ref > 0 && ref <= buyPrice * 1.03;
     return `
-      <div class="trigger-card ${fired ? 'trigger-fired' : ''}">
+      <div class="trigger-card ${fired?'trigger-fired':''}">
         <div class="trigger-top">
-          <span class="trigger-level-badge ${t.fundSource === 'Panic' ? 'panic' : ''}">${t.level} · ${t.fundSource}</span>
-          <span class="trigger-note-text">${t.notes || ''}</span>
+          <div>
+            <span class="trigger-level-badge ${isPanic?'panic':''}">${t.level} · ${t.fundSource||''}</span>
+          </div>
+          <span class="trigger-note-text">${t.notes||''}</span>
         </div>
         <div class="trigger-stats">
           <div class="trigger-stat">
             <span class="trigger-stat-label">Buy Price</span>
-            <span class="trigger-stat-value ${fired ? 'positive' : ''}">${fmtUsd(t.buyPrice)}</span>
+            <span class="trigger-stat-value ${fired?'positive':''}">${fmtUsd(buyPrice)}</span>
           </div>
           <div class="trigger-stat">
             <span class="trigger-stat-label">Drop</span>
-            <span class="trigger-stat-value negative">${Math.round(t.drop * 100)}%</span>
+            <span class="trigger-stat-value negative">${((t.drop||0)*100).toFixed(0)}%</span>
           </div>
           <div class="trigger-stat">
             <span class="trigger-stat-label">Deploy (THB)</span>
-            <span class="trigger-stat-value">${fmtThb(t.thbUse)}</span>
+            <span class="trigger-stat-value">${fmtThb(thbUse)}</span>
           </div>
           <div class="trigger-stat">
             <span class="trigger-stat-label">Est. BTC</span>
-            <span class="trigger-stat-value positive">${fmtBtc(t.btcEst, 4)}</span>
+            <span class="trigger-stat-value positive">${fmtBtc(btcEst, 4)}</span>
           </div>
         </div>
       </div>`;
   }).join('');
 }
 
-function normalizeTriggers(triggers, ref, usdthb) {
-  const sorted = triggers.map(t => ({ ...t })).sort((a, b) => (a.drop || 0) - (b.drop || 0));
-  return sorted.map((t, i) => {
-    const fundSource = i < 2 ? 'Dip' : 'Panic';
-    const level = `L${i + 1}`;
-    const buyPrice = +(t.buyPrice || (ref * (1 + (t.drop || 0))));
-    const thbUse = +(t.thbUse || 0);
-    const btcEst = thbUse > 0 && buyPrice > 0 ? (thbUse / usdthb) / buyPrice : +(t.btcEst || 0);
-    return { ...t, level, fundSource, buyPrice, thbUse, btcEst };
-  });
-}
-
 function buildAutoTriggers(ref, usdthb) {
   if (!ref) return [];
-  return [
-    { level:'L1', drop:-0.10, fundSource:'Dip',   notes:'Small buy on -10%',   thbUse:7500  },
-    { level:'L2', drop:-0.20, fundSource:'Dip',   notes:'More on -20%',        thbUse:15000 },
-    { level:'L3', drop:-0.30, fundSource:'Panic', notes:'Panic buy -30%',      thbUse:15000 },
-    { level:'L4', drop:-0.40, fundSource:'Panic', notes:'All-in -40%',         thbUse:30000 }
-  ].map(t => ({
+  const levels = [
+    { level:'L1', drop:-0.10, fundSource:'Dip',   notes:'Fear zone · first buy',   thbUse:7437.5  },
+    { level:'L2', drop:-0.20, fundSource:'Dip',   notes:'Fear zone · add more',    thbUse:14875 },
+    { level:'L3', drop:-0.30, fundSource:'Panic', notes:'Extreme fear · start',    thbUse:14875 },
+    { level:'L4', drop:-0.40, fundSource:'Panic', notes:'Extreme fear · all-in',   thbUse:29750 }
+  ];
+  return levels.map(t => ({
     ...t,
     buyPrice: ref * (1 + t.drop),
     btcEst: t.thbUse / usdthb / (ref * (1 + t.drop))

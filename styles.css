@@ -69,7 +69,7 @@ body {
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
-  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  padding-bottom: calc(92px + env(safe-area-inset-bottom));
 }
 
 button { cursor: pointer; font: inherit; border: none; background: none; color: inherit; }
@@ -79,6 +79,38 @@ p, h1, h2, h3, h4 { margin: 0; }
 .mono { font-family: 'Space Mono', 'Courier New', monospace; }
 
 /* ── Color helpers ────────────────────── */
+
+#pageTitle,
+.hero-btc,
+.stat-value,
+.hero-foot-val,
+.card-head h3,
+.market-price,
+.entry-title,
+.entry-val,
+.dca-btc,
+.flow-total strong,
+.trigger-stat-value,
+.avg-cost-val,
+.proj-mini-cell strong,
+.proj-gap-chip,
+.btn-ghost-sm,
+.ref-price-badge,
+.avg-vs-mid,
+.proj-est-big {
+  color: var(--text);
+}
+.hero-main,
+.stat-card,
+.flow-item,
+.hero-footer,
+.dca-hero-card,
+.proj-summary-body,
+.market-card,
+.trigger-card {
+  color: var(--text);
+}
+
 .positive     { color: var(--green) !important; }
 .negative     { color: var(--red)   !important; }
 .accent-orange { color: var(--orange) !important; }
@@ -96,12 +128,7 @@ p, h1, h2, h3, h4 { margin: 0; }
   margin: 0 auto;
   min-height: 100svh;
   background: var(--bg);
-  color: var(--text);
   position: relative;
-}
-
-.app-shell *, .app-shell *::before, .app-shell *::after {
-  border-color: var(--border);
 }
 
 /* ── Topbar ───────────────────────────── */
@@ -138,20 +165,38 @@ p, h1, h2, h3, h4 { margin: 0; }
 
 .topbar-right {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 8px;
   padding-bottom: 2px;
-  flex-shrink: 0;
 }
 
-.add-top-btn { flex-shrink: 0; }
+.market-topic-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.price-topic {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-right: 4px;
+}
+
+.icon-btn--small {
+  width: 34px;
+  height: 34px;
+  color: var(--text);
+}
 
 .price-pill {
   display: flex;
   align-items: center;
   gap: 5px;
   padding: 5px 11px;
-  max-width: 150px;
   background: var(--btc-bg);
   border: 1px solid color-mix(in srgb, var(--btc) 20%, transparent);
   border-radius: 999px;
@@ -283,7 +328,7 @@ p, h1, h2, h3, h4 { margin: 0; }
 }
 
 .hero-fiat {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--muted);
   letter-spacing: -.01em;
 }
@@ -465,11 +510,11 @@ p, h1, h2, h3, h4 { margin: 0; }
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 16px;
-  align-items: start;
+  align-items: center;
   margin: 12px 0 0;
 }
 
-.dca-hero-left {}
+.dca-hero-left { display:flex; flex-direction:column; justify-content:center; min-height: 142px; }
 
 .dca-btc-row {
   display: flex;
@@ -533,7 +578,7 @@ p, h1, h2, h3, h4 { margin: 0; }
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 16px;
-  align-items: start;
+  align-items: center;
 }
 
 .proj-est-big {
@@ -661,24 +706,19 @@ p, h1, h2, h3, h4 { margin: 0; }
 .market-card { padding: 18px 20px; }
 
 .market-prices {
-  display: flex;
-  align-items: center;
-  gap: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
   margin-bottom: 12px;
 }
 
-.market-prices > div { flex: 1; }
-.market-prices > div:last-child { text-align: right; }
+.market-prices > div { width: 100%; }
+.market-prices > div:last-child { text-align: left; }
 
-.market-divider {
-  width: 1px;
-  height: 48px;
-  background: var(--border);
-  flex-shrink: 0;
-}
+.market-divider { display: none; }
 
 .market-price {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   letter-spacing: -.05em;
   display: block;
@@ -777,8 +817,8 @@ p, h1, h2, h3, h4 { margin: 0; }
   width: min(430px, 100vw);
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  align-items: end;
-  padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+  align-items: center;
+  padding: 8px 0 calc(4px + env(safe-area-inset-bottom));
   background: color-mix(in srgb, var(--card) 95%, transparent);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -790,8 +830,10 @@ p, h1, h2, h3, h4 { margin: 0; }
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 3px;
-  padding: 6px 0 2px;
+  min-height: 58px;
+  padding: 2px 0 0;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: .01em;
@@ -956,68 +998,13 @@ p, h1, h2, h3, h4 { margin: 0; }
   .proj-summary-body { grid-template-columns: 1fr; }
 }
 
-
-/* Theme hardening */
-.dark #pageTitle,
-.dark .hero-btc,
-.dark .hero-btc-unit,
-.dark .hero-fiat,
-.dark .hero-foot-val,
-.dark .stat-value,
-.dark .flow-label,
-.dark .flow-val,
-.dark .flow-btc,
-.dark .month-val,
-.dark .entry-title,
-.dark .entry-val,
-.dark .dca-btc,
-.dark .dca-btc-unit,
-.dark .dca-of-goal,
-.dark .proj-est-num,
-.dark .proj-est-unit,
-.dark .proj-mini-cell strong,
-.dark .market-price,
-.dark .avg-cost-val,
-.dark .trigger-stat-value,
-.dark .card-head h3,
-.dark .btn-ghost-sm {
-  color: var(--text) !important;
-}
-.dark .hero-fiat, .dark .dca-of-goal, .dark .muted, .dark .label-xs, .dark .text-xs, .dark .text-sm { color: var(--muted) !important; }
-.dark .accent-orange { color: var(--orange) !important; }
-.dark .positive { color: var(--green) !important; }
-.dark .negative { color: var(--red) !important; }
-.dark .price-pill { color: var(--btc) !important; }
-
-/* DCA centering */
-.dca-hero-main { align-items: center; }
-.dca-hero-left { display:flex; flex-direction:column; justify-content:center; min-height: 150px; }
-.proj-summary-body { align-items: center; }
-.proj-est-big { justify-content:center; min-height: 150px; }
-
-/* Market card layout */
-.market-prices { display:grid; grid-template-columns: 1fr; gap: 10px; }
-.market-prices > div:last-child { text-align: left; }
-.market-divider, .market-price-stack-sep { display:none; }
-.market-price { font-size: 24px; }
-.market-foot { padding-top: 12px; }
-
-/* Trigger cards */
-.trigger-top { align-items: flex-start; gap: 8px; }
-.trigger-note-text { text-align: right; max-width: 52%; line-height: 1.35; }
-
-/* Bottom nav: 5 items, no FAB */
-.bottom-nav { grid-template-columns: repeat(5, 1fr); padding: 8px 0 calc(10px + env(safe-area-inset-bottom)); }
-.nav-btn { min-width: 0; }
 .fab { display:none !important; }
+.nav-fab-gap { display:none !important; }
 
-/* More compact hero metric row on home */
-.hero-footer { grid-template-columns: repeat(3, 1fr); }
+.dark h1, .dark h2, .dark h3, .dark .hero-btc, .dark .stat-value, .dark .hero-foot-val, .dark .flow-label, .dark .entry-title, .dark .market-price, .dark .avg-cost-val, .dark .trigger-stat-value { color: var(--text) !important; }
+.dark .proj-est-num { color: var(--green) !important; }
+.dark .negative { color: var(--red) !important; }
+.dark .positive { color: var(--green) !important; }
+.dark .accent-orange { color: var(--orange) !important; }
 
-@media (max-width: 375px) {
-  .price-pill { max-width: 138px; font-size: 10px; }
-  .topbar-right { gap: 6px; }
-  .icon-btn { width: 34px; height: 34px; }
-  .dca-hero-left { min-height: 132px; }
-  .proj-est-big { min-height: 132px; }
-}
+.market-card .market-price + .market-price { margin-top: 10px; }
