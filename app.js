@@ -480,10 +480,10 @@ function render() {
 
 function renderProjection(p) {
   document.getElementById('projCurrentBtc').textContent = fmtNum(p.currentBtc, 4);
-  document.getElementById('projTargetBtc').textContent = fmtNum(p.targetBTC, 4);
   document.getElementById('projTargetValue').textContent = fmtNum(p.targetBTC, 4);
-  document.getElementById('projTargetAgeInline').textContent = p.targetAge;
-  document.getElementById('projTimeLeft').textContent = `${p.targetAge - p.currentAge} years`;
+  document.getElementById('projTargetValueSide').textContent = fmtNum(p.targetBTC, 4);
+  document.getElementById('projTargetAgeInline').textContent = String(p.targetAge);
+  document.getElementById('projTimeLeft').textContent = `${Math.max(0, p.targetAge - p.currentAge)} years`;
   const pct = Math.min(100, p.currentBtc / p.targetBTC * 100);
   document.getElementById('projProgressFill').style.width = `${pct}%`;
   document.getElementById('projProgressPct').textContent = fmtPct(pct, 2);
@@ -493,7 +493,7 @@ function renderProjection(p) {
   const chip = document.getElementById('projGapChip');
   chip.textContent = p.onTrack ? 'On target' : `${fmtNum(p.shortfall, 3)} BTC short`;
   chip.className = `status-chip ${p.onTrack ? '' : 'negative'}`;
-  document.getElementById('projReachAge').textContent = p.reachAge > 100 ? '100+' : p.reachAge.toFixed(1);
+  document.getElementById('projReachAge').textContent = p.reachAge > 100 ? 'Beyond 100+' : p.reachAge.toFixed(1);
   document.getElementById('projLateYears').textContent = p.onTrack ? 'On target' : `${fmtNum(p.shortfall, 3)} BTC`;
   document.getElementById('projTargetAge').textContent = p.targetAge;
   document.getElementById('projTargetAge2').textContent = p.targetAge;
@@ -519,11 +519,8 @@ function renderProjection(p) {
   document.getElementById('projectionCallout').innerHTML = p.onTrack ? `At age <strong>${p.targetAge}</strong>, your DCA-only path reaches <strong>${fmtNum(p.estimatedBTCAtTargetAge, 3)} BTC</strong>. You are on target.` : `At age <strong>${p.targetAge}</strong>, your DCA-only path reaches <strong>${fmtNum(p.estimatedBTCAtTargetAge, 3)} BTC</strong>. Raise DCA to <strong>${fmtUsd(p.requiredDca, 0)}/month</strong>.`;
   document.getElementById('projectionSuggestions').innerHTML = p.suggestions.map(s => `
     <div class="suggestion-card">
-      <div>
-        <strong>${s.title}</strong>
-        <p>${String(s.body).replace(/Projected\s*/,'')}</p>
-        <p>${s.sub || ''}</p>
-      </div>
+      <strong>${s.title}</strong>
+      <p>${String(s.body).replace(/Projected\s*/,'')}</p>
     </div>
   `).join('');
   renderRecent('dcaList', state.dca.slice().sort((a,b)=>sortByDateDesc(a,b)).map(x => ({

@@ -607,3 +607,19 @@ body, .app-shell, .card, .stat-card, .assumption-card, .suggestion-card, .sheet,
   #homeStats .stat-card, #futuresStats .stat-card, #dipStats .stat-card, #gridStats .stat-card { padding:14px; min-height: 118px; }
   .assumption-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+
+/* v8 fixes */
+.projection-main{min-width:0;}
+.projection-amount-row{display:flex;flex-direction:column;align-items:flex-start;gap:6px;}
+.of-goal{font-size:16px;}
+.target-age-wrap{margin-top:10px;}
+#screen-dca .hero-number small{display:inline-block;margin-left:6px;}
+.stack-cards{display:grid;grid-template-columns:1fr;gap:10px;}
+.mini-card{padding:14px;border:1px solid var(--line);border-radius:18px;background:var(--card-2);}
+.mini-card strong{display:block;font-size:18px;line-height:1.1;margin-top:6px;}
+.mini-sub{display:block;margin-top:6px;color:var(--muted);font-size:12px;}
+.month-grid > div {text-align:center;}
+@media (min-width:391px){
+  .projection-hero .projection-top{grid-template-columns:1.2fr .8fr;}
+}

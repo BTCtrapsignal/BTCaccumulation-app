@@ -121,21 +121,21 @@
 
         <section class="card projection-hero">
           <div class="projection-top">
-            <div>
+            <div class="projection-main">
               <p class="eyebrow">Current DCA Stack</p>
-              <h2 class="hero-number"><span id="projCurrentBtc"></span><small> BTC</small></h2>
-              
+              <div class="projection-amount-row">
+                <h2 class="hero-number"><span id="projCurrentBtc"></span><small> BTC</small></h2>
+                <p class="subtle of-goal">of <span id="projTargetValue"></span> BTC</p>
+              </div>
             </div>
             <div class="projection-side">
-              <div class="target-meta-row">
-                <div>
-                  <p class="eyebrow">Target</p>
-                  <p class="side-value"><span id="projTargetValue"></span> BTC</p>
-                </div>
-                <div>
-                  <p class="eyebrow">By age</p>
-                  <p class="side-value"><span id="projTargetAgeInline"></span></p>
-                </div>
+              <div>
+                <p class="eyebrow">Target</p>
+                <p class="side-value"><span id="projTargetValueSide"></span> BTC</p>
+              </div>
+              <div class="target-age-wrap">
+                <p class="eyebrow">By age</p>
+                <p class="side-value"><span id="projTargetAgeInline"></span></p>
               </div>
               <div class="subtle block-top"><strong id="projTimeLeft"></strong> left</div>
             </div>
