@@ -948,93 +948,154 @@ p, h1, h2, h3, h4 { margin: 0; }
 }
 
 
-/* v12 comments fix pack */
-.app-shell,
-.screen,
-.card,
-.mini-card,
-.assume-cell,
-.proj-mini-cell,
-.scenario-item,
-.scenario-body,
-.entry-row,
-.entry-left,
-.entry-right,
-.trigger-card,
-.market-card,
-.avg-cost-cell,
-.month-cell,
-.bottom-nav,
-.sheet,
-.field-group,
-.field-group input {
-  color: var(--text);
-}
-
-.assume-cell .avalue,
-.assume-cell .avalue *,
-.proj-mini-cell strong,
-.proj-mini-cell strong *,
-.scenario-title,
-.scenario-title *,
-.month-val,
-.month-val *,
-.entry-title,
-.entry-title *,
-.entry-value,
-.entry-value *,
-.avg-cost-val,
-.avg-cost-val *,
-.market-price,
-.market-price *,
-.trigger-stat-value,
-.trigger-stat-value *,
-#projectionSuggestions strong,
-#projectionSuggestions b,
-#projectionSummary strong,
-#projectionSummary b {
-  color: inherit;
-}
-
+/* ===== DARK READABILITY RESTORE PATCH ===== */
+.dark,
 .dark .app-shell,
+.dark .topbar,
+.dark .content,
 .dark .screen,
 .dark .card,
 .dark .mini-card,
 .dark .assume-cell,
 .dark .proj-mini-cell,
 .dark .scenario-item,
-.dark .scenario-body,
+.dark .month-cell,
 .dark .entry-row,
-.dark .entry-left,
-.dark .entry-right,
 .dark .trigger-card,
 .dark .market-card,
-.dark .avg-cost-cell,
-.dark .month-cell,
 .dark .bottom-nav,
-.dark .sheet,
-.dark .field-group,
-.dark .field-group input {
+.dark .price-pill,
+.dark .icon-btn,
+.dark .hero-card,
+.dark .list,
+.dark .entry-left,
+.dark .entry-right,
+.dark .scenario-body {
   color: var(--text);
 }
 
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6,
+.dark p,
+.dark span,
+.dark div,
+.dark small,
+.dark strong,
+.dark b,
+.dark label,
+.dark button,
+.dark a {
+  color: inherit;
+}
+
+.dark .eyebrow,
+.dark .section-kicker,
+.dark .mini-sub,
+.dark .muted,
+.dark .entry-sub,
+.dark .entry-sub-val,
+.dark .scenario-reach,
+.dark .hero-fiat,
+.dark .assume-sub,
+.dark .proj-mini-cell span:last-child,
+.dark .month-label,
+.dark .flow-label,
+.dark .total-row span,
+.dark .price-thb,
+.dark .price-sep {
+  color: var(--muted) !important;
+}
+
+.dark .hero-number,
+.dark .hero-unit,
+.dark .stat-strong,
+.dark .mini-value,
 .dark .month-val,
+.dark .entry-title,
+.dark .entry-val,
 .dark .assume-cell .avalue,
 .dark .proj-mini-cell strong,
 .dark .scenario-title,
-.dark .entry-title,
-.dark .entry-value,
-.dark .avg-cost-val,
-.dark .market-price,
-.dark .trigger-stat-value {
+.dark .flow-money,
+.dark .flow-btc,
+.dark #pageTitle,
+.dark #topbarBtcPrice,
+.dark #homeProgressText,
+.dark #homeGoalText,
+.dark #homeAvgCost,
+.dark #homeCapital,
+.dark #homeStacked,
+.dark #projectionCurrentText,
+.dark #projectionNeedPerMonth,
+.dark #projectionReachAge,
+.dark #projectionGapBtc,
+.dark #monthEntries,
+.dark #monthCapital,
+.dark #topbarThbPrice,
+.dark .nav-item.active,
+.dark .entry-value {
   color: var(--text) !important;
 }
 
-.dark .positive { color: var(--green) !important; }
-.dark .negative { color: var(--red) !important; }
-.dark .accent-orange { color: var(--orange) !important; }
+.dark .positive,
+.dark .entry-val.positive,
+.dark .month-val.positive,
+.dark .flow-money.positive,
+.dark .flow-btc.positive,
+.dark .scenario-timing.positive {
+  color: var(--green) !important;
+}
 
-#triggerBudgetSub {
-  margin-top: -6px;
+.dark .negative,
+.dark .entry-val.negative,
+.dark .flow-money.negative,
+.dark .flow-btc.negative,
+.dark .scenario-timing.negative {
+  color: var(--red) !important;
+}
+
+.dark .accent-orange,
+.dark .stat-strong.accent-orange {
+  color: var(--orange) !important;
+}
+
+.dark .price-pill {
+  color: var(--btc) !important;
+}
+.dark .price-pill * {
+  color: inherit !important;
+}
+
+.dark .bottom-nav {
+  background: rgba(11,12,14,.92) !important;
+  backdrop-filter: blur(18px);
+}
+.dark .bottom-nav .nav-item {
+  color: var(--muted) !important;
+}
+.dark .bottom-nav .nav-item.active {
+  color: var(--text) !important;
+}
+
+.dark .card,
+.dark .mini-card,
+.dark .assume-cell,
+.dark .proj-mini-cell,
+.dark .scenario-item,
+.dark .month-cell,
+.dark .trigger-card,
+.dark .market-card {
+  background: var(--card);
+  border-color: var(--border);
+}
+
+.dark .icon-btn,
+.dark .pill-btn,
+.dark .ghost-btn {
+  color: var(--text) !important;
 }
 

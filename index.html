@@ -348,8 +348,7 @@
             <span class="mono text-sm" id="triggerRefPrice">—</span>
           </div>
         </div>
-        <p class="muted text-sm mb-12" id="triggerBudgetHelp">Auto-calculated from reference price and your total trigger budget.</p>
-        <p class="muted text-sm mb-12" id="triggerBudgetSub">Edit budget in DCA Plan → Total Trigger Budget (THB).</p>
+        <p class="muted text-sm mb-12">Auto-calculated from reference price. Deploy on confirmed breakdown.</p>
         <div id="triggersList"></div>
       </div>
 
@@ -431,7 +430,6 @@
     <label class="field-group"><span>Current DCA stack (BTC)</span><input name="currentDcaBtc" type="number" step="0.00000001" /></label>
     <label class="field-group"><span>Monthly DCA (USD)</span><input name="monthlyDcaUsd" type="number" step="1" /></label>
     <label class="field-group"><span>Annual BTC growth (%)</span><input name="annualGrowthRate" type="number" step="1" /></label>
-    <label class="field-group"><span>Total trigger budget (THB)</span><input name="triggerBudgetThb" type="number" step="100" min="0" /></label>
     <div class="sheet-actions">
       <button type="button" class="btn-ghost" id="cancelProjectionBtn">Cancel</button>
       <button type="submit" class="btn-primary">Save</button>
