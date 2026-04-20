@@ -946,3 +946,95 @@ p, h1, h2, h3, h4 { margin: 0; }
   .dca-hero-right { flex-direction: row; flex-wrap: wrap; border-left: none; border-top: 1px solid var(--border); padding-left: 0; padding-top: 12px; }
   .proj-summary-body { grid-template-columns: 1fr; }
 }
+
+
+/* v12 comments fix pack */
+.app-shell,
+.screen,
+.card,
+.mini-card,
+.assume-cell,
+.proj-mini-cell,
+.scenario-item,
+.scenario-body,
+.entry-row,
+.entry-left,
+.entry-right,
+.trigger-card,
+.market-card,
+.avg-cost-cell,
+.month-cell,
+.bottom-nav,
+.sheet,
+.field-group,
+.field-group input {
+  color: var(--text);
+}
+
+.assume-cell .avalue,
+.assume-cell .avalue *,
+.proj-mini-cell strong,
+.proj-mini-cell strong *,
+.scenario-title,
+.scenario-title *,
+.month-val,
+.month-val *,
+.entry-title,
+.entry-title *,
+.entry-value,
+.entry-value *,
+.avg-cost-val,
+.avg-cost-val *,
+.market-price,
+.market-price *,
+.trigger-stat-value,
+.trigger-stat-value *,
+#projectionSuggestions strong,
+#projectionSuggestions b,
+#projectionSummary strong,
+#projectionSummary b {
+  color: inherit;
+}
+
+.dark .app-shell,
+.dark .screen,
+.dark .card,
+.dark .mini-card,
+.dark .assume-cell,
+.dark .proj-mini-cell,
+.dark .scenario-item,
+.dark .scenario-body,
+.dark .entry-row,
+.dark .entry-left,
+.dark .entry-right,
+.dark .trigger-card,
+.dark .market-card,
+.dark .avg-cost-cell,
+.dark .month-cell,
+.dark .bottom-nav,
+.dark .sheet,
+.dark .field-group,
+.dark .field-group input {
+  color: var(--text);
+}
+
+.dark .month-val,
+.dark .assume-cell .avalue,
+.dark .proj-mini-cell strong,
+.dark .scenario-title,
+.dark .entry-title,
+.dark .entry-value,
+.dark .avg-cost-val,
+.dark .market-price,
+.dark .trigger-stat-value {
+  color: var(--text) !important;
+}
+
+.dark .positive { color: var(--green) !important; }
+.dark .negative { color: var(--red) !important; }
+.dark .accent-orange { color: var(--orange) !important; }
+
+#triggerBudgetSub {
+  margin-top: -6px;
+}
+

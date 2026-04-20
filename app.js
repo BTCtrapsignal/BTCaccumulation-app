@@ -15,7 +15,8 @@ const state = {
     monthlyDcaUsd: 300,
     annualGrowthRate: 10,
     theme: 'light',
-    priceUpdatedAt: null
+    priceUpdatedAt: null,
+    triggerBudgetThb: 67000
   },
   dca: [], dip: [], futures: [], grid: [], triggers: []
 };
@@ -182,6 +183,7 @@ function setupDialogs() {
     projForm.currentDcaBtc.value    = computeMetrics().dcaBtc.toFixed(8);
     projForm.monthlyDcaUsd.value    = state.settings.monthlyDcaUsd;
     projForm.annualGrowthRate.value = state.settings.annualGrowthRate;
+    if (projForm.triggerBudgetThb) projForm.triggerBudgetThb.value = state.settings.triggerBudgetThb || 67000;
     projDlg.showModal();
   });
   const closeProjDlg = () => projDlg.close();
@@ -194,6 +196,7 @@ function setupDialogs() {
     state.settings.targetAge        = +f.get('targetAge')        || 40;
     state.settings.monthlyDcaUsd    = +f.get('monthlyDcaUsd')    || 300;
     state.settings.annualGrowthRate = +f.get('annualGrowthRate') || 10;
+    state.settings.triggerBudgetThb   = +f.get('triggerBudgetThb') || state.settings.triggerBudgetThb || 67000;
     const mc = +f.get('currentDcaBtc');
     if (mc > 0) state.settings.manualCurrentDcaBtc = mc;
     persist(); projDlg.close(); render();
@@ -415,7 +418,7 @@ function buildSuggestions({ cur, tgt, age, tAge, p0, dca, gr, reqDca }) {
     const title  = extra > 0
       ? `Add $${extra.toFixed(0)}/month`
       : growthAdj > gr
-        ? `Growth at ${(growthAdj*100).toFixed(0)}%`
+        ? `Increase growth to ${(growthAdj*100).toFixed(0)}%`
         : 'At current DCA';
     return {
       icon, cls, title,
@@ -765,7 +768,10 @@ function renderMore(m) {
 // ── TRIGGERS ──────────────────────────────────────────
 function renderTriggers(m) {
   const ref = m.price || state.settings.currentPrice || 0;
+  const budget = +(state.settings.triggerBudgetThb || 67000);
   setText('triggerRefPrice', fmtUsd(ref));
+  setText('triggerBudgetHelp', `Auto-calculated from reference price and your total trigger budget: ${fmtThb(budget)}.`);
+  setText('triggerBudgetSub', 'Edit budget in DCA Plan → Total Trigger Budget (THB).');
 
   // Avg Cost vs Market
   setText('avgCostVal',   fmtUsd(m.avgCost));
@@ -832,15 +838,24 @@ function renderTriggers(m) {
 
 function buildAutoTriggers(ref, usdthb) {
   if (!ref) return [];
-  return [
-    { level:'L1', drop:-0.10, fundSource:'Dip',   notes:'Small buy on -10%',   thbUse:7500  },
-    { level:'L2', drop:-0.20, fundSource:'Dip',   notes:'More on -20%',        thbUse:15000 },
-    { level:'L3', drop:-0.30, fundSource:'Panic', notes:'Panic buy -30%',      thbUse:15000 },
-    { level:'L4', drop:-0.40, fundSource:'Panic', notes:'All-in -40%',         thbUse:30000 }
-  ].map(t => ({
-    ...t,
-    buyPrice: ref * (1 + t.drop),
-    btcEst: t.thbUse / usdthb / (ref * (1 + t.drop))
+  const budget = +(state.settings.triggerBudgetThb || 67000);
+  const weights = [0.10, 0.20, 0.30, 0.40];
+  const drops = [-0.10, -0.20, -0.30, -0.40];
+  const sources = ['Dip', 'Dip', 'Panic', 'Panic'];
+  const notes = [
+    'Small buy on -10%',
+    'Add more on -20%',
+    'Start panic buying on -30%',
+    'All-in panic reserve on -40%'
+  ];
+
+  return weights.map((w, i) => ({
+    level: `L${i+1}`,
+    drop: drops[i],
+    fundSource: sources[i],
+    notes: notes[i],
+    thbUse: Math.round(budget * w),
+    buyPrice: ref * (1 + drops[i])
   }));
 }
 
